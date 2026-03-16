@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 
-const routes: RouteRecordRaw[] = [
-  // Rutas públicas base (se rellenarán más adelante)
+const routes = [
+  // Base public routes (will be extended later)
   {
     path: '/t/:tenantSlug',
     name: 'public-home',
