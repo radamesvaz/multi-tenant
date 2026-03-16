@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { envConfig } from '../../core/config';
 import { useAuthStore } from '../../shared/store';
 
 const routes = [
   {
     path: '/',
-    redirect: '/t/default',
+    redirect: `/t/${envConfig.defaultTenantSlug}`,
   },
   {
     path: '/t/:tenantSlug',
@@ -81,7 +82,7 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/t/default',
+    redirect: `/t/${envConfig.defaultTenantSlug}`,
   },
 ];
 
