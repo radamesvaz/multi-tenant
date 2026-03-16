@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
@@ -7,7 +8,7 @@
       <h1>Admin layout</h1>
     </header>
     <main class="admin-layout__content">
-      <slot />
+      <RouterView />
     </main>
   </div>
 </template>
