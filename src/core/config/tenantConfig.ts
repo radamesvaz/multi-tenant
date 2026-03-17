@@ -1,19 +1,16 @@
+import { getMockTenantConfig } from '../mocks';
+
 export type TenantUiConfig = {
   displayName: string;
   supportPhone?: string;
 };
 
-const tenantUiConfigMap: Record<string, TenantUiConfig> = {
-  default: {
-    displayName: 'Default Tenant',
-  },
-};
-
 export const getTenantUiConfig = (tenantSlug: string): TenantUiConfig => {
-  return (
-    tenantUiConfigMap[tenantSlug] ?? {
-      displayName: tenantSlug,
-    }
-  );
+  const tenant = getMockTenantConfig(tenantSlug);
+
+  return {
+    displayName: tenant.displayName,
+    supportPhone: tenant.supportPhone ?? undefined,
+  };
 };
 

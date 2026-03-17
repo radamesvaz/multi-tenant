@@ -59,6 +59,19 @@ export type TenantBranding = {
   accent_color: string | null;
 };
 
+export type TenantSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+
+export type TenantConfig = {
+  slug: string;
+  displayName: string;
+  supportPhone: string | null;
+  whatsapp: string | null;
+  planCode: string;
+  subscriptionStatus: TenantSubscriptionStatus;
+  isActive: boolean;
+  branding: TenantBranding;
+};
+
 export type AuthTokenResponse = {
   token: string;
 };
