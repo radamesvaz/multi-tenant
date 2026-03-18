@@ -5,6 +5,7 @@ import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
 import ProductCard from '../components/ProductCard.vue';
 import ProductGallery from '../components/ProductGallery.vue';
+import './PublicHomePage.css';
 
 const productsStore = usePublicProductsStore();
 const cartStore = useCartStore();

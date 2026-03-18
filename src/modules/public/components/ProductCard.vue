@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import type { Product } from '../../../core/models';
+import './ProductCard.css';
 
 export default defineComponent({
   name: 'ProductCard',

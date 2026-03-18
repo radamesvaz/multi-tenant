@@ -5,6 +5,7 @@ import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useCartStore } from '../store/cart';
+import './PublicLayout.css';
 
 const { tenantSlug } = useCurrentTenant();
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
@@ -82,7 +83,7 @@ watchEffect(() => {
       <a href="#" class="store-brand">
         <img
           v-if="hasLogo"
-          :src="branding.logo_url!"
+          :src="branding.logo_url || ''"
           :alt="tenantUiConfig.displayName"
           class="store-brand__logo"
           :style="logoStyle"
