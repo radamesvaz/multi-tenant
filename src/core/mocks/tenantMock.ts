@@ -1,5 +1,16 @@
 import type { TenantConfig } from '../models';
 
+/**
+ * Logo specifications for tenants.
+ * See full documentation: /markdowns/LOGO_SPECIFICATIONS.md
+ *
+ * Quick reference:
+ * - Upload dimensions: 360 x 80 px (ideal)
+ * - Display: max 180x40px (desktop), max 140x36px (mobile)
+ * - Format: SVG preferred, PNG with transparency
+ * - Max file size: 50KB
+ */
+
 const createTenantConfig = (config: TenantConfig): TenantConfig => config;
 
 export const mockTenantConfigs: Record<string, TenantConfig> = {
@@ -14,10 +25,10 @@ export const mockTenantConfigs: Record<string, TenantConfig> = {
     branding: {
       logo_url: '/mock/tenants/default/logo.svg',
       logo_width: 180,
-      logo_height: 56,
-      primary_color: '#D97706',
-      secondary_color: '#F59E0B',
-      accent_color: '#92400E',
+      logo_height: 40,
+      primary_color: '#2f6d4a',
+      secondary_color: '#adc8b4',
+      accent_color: '#1f4d34',
     },
   }),
   'mi-panaderia': createTenantConfig({
@@ -29,9 +40,9 @@ export const mockTenantConfigs: Record<string, TenantConfig> = {
     subscriptionStatus: 'trialing',
     isActive: true,
     branding: {
-      logo_url: '/mock/tenants/mi-panaderia/logo.svg',
-      logo_width: 170,
-      logo_height: 52,
+      logo_url: null,
+      logo_width: 160,
+      logo_height: 40,
       primary_color: '#7C3AED',
       secondary_color: '#A78BFA',
       accent_color: '#4C1D95',

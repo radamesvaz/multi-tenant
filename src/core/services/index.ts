@@ -7,6 +7,7 @@ import type {
   Product,
   TenantBranding,
 } from '../models';
+import { mockProducts, getMockProductById } from '../mocks';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -18,6 +19,11 @@ type HttpOptions = {
 };
 
 async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): Promise<TResponse> {
+  // Temporary mock short-circuit: avoid real API calls for products while integrating backend.
+  if (path === '/products' && (!options.method || options.method === 'GET')) {
+    return Promise.resolve(mockProducts as unknown as TResponse);
+  }
+
   const url = `${envConfig.apiBaseUrl}${path}`;
 
   const headers: Record<string, string> = {
@@ -74,10 +80,16 @@ export const tenantService = {
 
 export const productService = {
   getPublicProducts() {
-    return httpRequest<Product[]>('/products');
+    // TODO: replace with real HTTP call when backend integration is ready
+    return Promise.resolve<Product[]>(mockProducts);
   },
   getProductById(id: number) {
-    return httpRequest<Product>(`/products/${id}`);
+    // TODO: replace with real HTTP call when backend integration is ready
+    const product = getMockProductById(id);
+    if (!product) {
+      return Promise.reject(new Error('Product not found'));
+    }
+    return Promise.resolve<Product>(product);
   },
 };
 
