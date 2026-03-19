@@ -37,7 +37,7 @@ export type Order = {
 };
 
 export type CreateOrderItemPayload = {
-  product_id: number;
+  id_product: number;
   quantity: number;
 };
 

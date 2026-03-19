@@ -14,6 +14,16 @@ const cartStore = useCartStore();
 
 const branding = computed(() => tenantConfig.value.branding);
 const hasLogo = computed(() => !!branding.value.logo_url);
+const formattedCartTotal = computed(() =>
+  cartStore.totalPrice.toLocaleString('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+);
+const cartItemsLabel = computed(() => (cartStore.itemCount === 1 ? 'producto' : 'productos'));
+const homeRoute = computed(() => `/t/${tenantSlug.value}`);
+const cartRoute = computed(() => `/t/${tenantSlug.value}/cart`);
+const checkoutRoute = computed(() => `/t/${tenantSlug.value}/checkout`);
 
 const tenantThemeStyle = computed(() => ({
   '--tenant-primary': branding.value.primary_color ?? '#2f6d4a',
@@ -64,6 +74,8 @@ function updateFavicon(dataUrl: string) {
 }
 
 watchEffect(() => {
+  cartStore.initializeForTenant(tenantSlug.value);
+
   const name = tenantUiConfig.value.displayName;
   const color = branding.value.primary_color ?? '#2f6d4a';
   
@@ -80,7 +92,7 @@ watchEffect(() => {
 <template>
   <div class="store-layout" :style="tenantThemeStyle">
     <header class="public-layout__header">
-      <a href="#" class="store-brand">
+      <RouterLink :to="homeRoute" class="store-brand">
         <img
           v-if="hasLogo"
           :src="branding.logo_url || ''"
@@ -91,15 +103,19 @@ watchEffect(() => {
         <span v-else class="store-brand__text">
           {{ tenantUiConfig.displayName }}
         </span>
-      </a>
+      </RouterLink>
       <nav class="store-nav">
-        <a href="#">Inicio</a>
-        <a href="#">
+        <RouterLink :to="homeRoute">Inicio</RouterLink>
+        <RouterLink :to="cartRoute">
           Carrito
           <span class="store-nav__badge">{{ cartStore.itemCount }}</span>
-        </a>
+        </RouterLink>
       </nav>
     </header>
+
+    <RouterLink v-if="cartStore.itemCount > 0" :to="checkoutRoute" class="cart-summary-sticky">
+      {{ cartStore.itemCount }} {{ cartItemsLabel }} · {{ formattedCartTotal }} €
+    </RouterLink>
 
     <main class="public-layout__content">
       <RouterView />
