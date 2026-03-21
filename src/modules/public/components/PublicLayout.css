@@ -1,0 +1,156 @@
+.store-layout {
+  --tenant-primary: #2f6d4a;
+  --tenant-secondary: #adc8b4;
+  --tenant-accent: #1f4d34;
+  --tenant-bg: color-mix(in srgb, var(--tenant-secondary) 12%, white);
+  --tenant-surface: color-mix(in srgb, var(--tenant-secondary) 8%, white);
+  --tenant-surface-strong: color-mix(in srgb, var(--tenant-secondary) 16%, white);
+  --tenant-line: color-mix(in srgb, var(--tenant-secondary) 42%, white);
+  --tenant-text: color-mix(in srgb, var(--tenant-accent) 74%, #0f1b13);
+  --tenant-muted: color-mix(in srgb, var(--tenant-accent) 40%, #4f5a50);
+  --tenant-pill-bg: color-mix(in srgb, var(--tenant-secondary) 25%, white);
+  --tenant-btn-bg: color-mix(in srgb, var(--tenant-secondary) 58%, white);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 24px 40px;
+  background: var(--tenant-bg);
+  color: var(--tenant-text);
+}
+
+.public-layout__header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -18px -24px 18px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--tenant-line);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--tenant-primary) 20%, white) 0%,
+    color-mix(in srgb, var(--tenant-secondary) 46%, white) 58%,
+    color-mix(in srgb, var(--tenant-accent) 28%, white) 100%
+  );
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.store-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.store-brand__logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 40px;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.store-brand__text {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  line-height: var(--leading-tight);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tenant-primary) 80%, #133224);
+}
+
+.store-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.store-nav a {
+  text-decoration: none;
+  color: color-mix(in srgb, var(--tenant-accent) 70%, #172a1d);
+  border: 1px solid var(--tenant-line);
+  background: var(--tenant-pill-bg);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: var(--font-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.store-nav__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tenant-primary) 78%, #173826);
+  color: #fff;
+  font-size: var(--font-xs);
+  font-weight: 700;
+}
+
+.cart-summary-sticky {
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: calc(100% - 8px);
+  margin: 0 auto 14px;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--tenant-accent) 22%, #ffffff);
+  border-radius: 999px;
+  background: color-mix(in srgb, white 90%, var(--tenant-secondary) 10%);
+  color: color-mix(in srgb, var(--tenant-accent) 82%, #102118);
+  font-size: var(--font-sm);
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .store-layout {
+    padding-inline: 14px;
+  }
+
+  .public-layout__header {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  .store-brand__logo {
+    max-height: 36px;
+    max-width: 140px;
+  }
+
+  .store-brand__text {
+    font-size: 1.125rem;
+  }
+
+  .store-nav {
+    gap: 6px;
+  }
+
+  .store-nav a {
+    padding: 6px 10px;
+    font-size: var(--font-xs);
+  }
+
+  .cart-summary-sticky {
+    top: 60px;
+    margin-bottom: 10px;
+    padding: 7px 12px;
+    font-size: var(--font-xs);
+  }
+}
