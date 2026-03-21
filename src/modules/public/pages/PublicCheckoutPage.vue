@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
 import { envConfig } from '../../../core/config';
 import { orderService, productService } from '../../../core/services';
 import type { CreateOrderPayload } from '../../../core/models';
+import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useNotification } from '../../../shared/composables/useNotification';
 import { useCartStore } from '../store/cart';
@@ -306,7 +306,7 @@ onMounted(() => {
 <template>
   <main class="checkout-page">
     <header class="checkout-page__header">
-      <RouterLink :to="homeRoute" class="checkout-page__back">Volver</RouterLink>
+      <BaseLink :to="homeRoute" class="checkout-page__back">Volver</BaseLink>
       <h1>Checkout</h1>
       <p>Completa tus datos para confirmar el pedido.</p>
     </header>
@@ -370,13 +370,14 @@ onMounted(() => {
             type="text"
             placeholder="https://maps.google.com/?q=..."
           />
-          <button
+          <BaseButton
+            unstyled
             type="button"
             class="checkout-location-button"
             @click="openGoogleMaps"
           >
             Abrir Google Maps
-          </button>
+          </BaseButton>
         </div>
 
         <!--
@@ -420,10 +421,22 @@ onMounted(() => {
           <strong>{{ formattedTotal }} €</strong>
         </div>
         <div class="checkout-form__actions">
-          <button type="submit" form="checkout-form" :disabled="!canSubmit">{{ submitButtonText }}</button>
-          <button type="button" class="secondary" @click="copyWhatsAppMessage">
+          <BaseButton
+            unstyled
+            type="submit"
+            form="checkout-form"
+            :disabled="!canSubmit"
+          >
+            {{ submitButtonText }}
+          </BaseButton>
+          <BaseButton
+            unstyled
+            type="button"
+            class="secondary"
+            @click="copyWhatsAppMessage"
+          >
             Copiar mensaje al portapapeles
-          </button>
+          </BaseButton>
         </div>
       </aside>
     </section>
@@ -448,15 +461,22 @@ onMounted(() => {
           <li>Pega el mensaje y envíalo.</li>
         </ol>
         <div class="checkout-whatsapp-helper__actions">
-          <button type="button" @click="copyWhatsAppMessage">Copiar mensaje</button>
-          <button type="button" class="secondary" @click="showWhatsAppWebHelper = false">
+          <BaseButton unstyled type="button" @click="copyWhatsAppMessage">
+            Copiar mensaje
+          </BaseButton>
+          <BaseButton
+            unstyled
+            type="button"
+            class="secondary"
+            @click="showWhatsAppWebHelper = false"
+          >
             Cerrar
-          </button>
+          </BaseButton>
         </div>
       </div>
     </section>
 
-    <RouterLink :to="homeRoute" class="checkout-page__home-link">Seguir comprando</RouterLink>
+    <BaseLink :to="homeRoute" class="checkout-page__home-link">Seguir comprando</BaseLink>
   </main>
 </template>
 

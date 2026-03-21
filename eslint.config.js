@@ -1,10 +1,13 @@
 import eslint from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import pluginVue from 'eslint-plugin-vue';
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
-export default [
+export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  ...pluginVue.configs['flat/recommended'],
   {
     files: ['src/**/*.{js,ts,tsx}'],
     languageOptions: {
@@ -22,5 +25,15 @@ export default [
       },
     },
   },
-];
-
+  {
+    files: ['src/**/*.vue'],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: ['.vue'],
+      },
+    },
+  },
+  eslintConfigPrettier,
+);

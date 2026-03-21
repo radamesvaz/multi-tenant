@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 import type { Product } from '../../../core/models';
 import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
+import { BaseButton } from '../../../shared/components';
 import ProductCard from '../components/ProductCard.vue';
 import ProductGallery from '../components/ProductGallery.vue';
 import './PublicHomePage.css';
@@ -83,7 +84,15 @@ const decrementProduct = (product: Product) => {
     <section v-if="isModalOpen && selectedProduct" class="product-modal">
       <div class="product-modal__backdrop" @click="closeModal" />
       <div class="product-modal__card">
-        <button type="button" class="product-modal__close" @click="closeModal">×</button>
+        <BaseButton
+          unstyled
+          type="button"
+          class="product-modal__close"
+          aria-label="Cerrar"
+          @click="closeModal"
+        >
+          ×
+        </BaseButton>
 
         <h2 class="product-modal__title">{{ selectedProduct.name }}</h2>
 
@@ -96,18 +105,24 @@ const decrementProduct = (product: Product) => {
         </p>
 
         <div class="product-modal__actions">
-          <button
+          <BaseButton
             v-if="getProductQuantity(selectedProduct.id_product) > 0"
+            unstyled
             type="button"
             class="qty-btn"
             @click="decrementProduct(selectedProduct)"
           >
             -1
-          </button>
+          </BaseButton>
           <span class="qty-value">{{ getProductQuantity(selectedProduct.id_product) }}</span>
-          <button type="button" class="qty-btn" @click="incrementProduct(selectedProduct)">
+          <BaseButton
+            unstyled
+            type="button"
+            class="qty-btn"
+            @click="incrementProduct(selectedProduct)"
+          >
             +1
-          </button>
+          </BaseButton>
         </div>
       </div>
     </section>
