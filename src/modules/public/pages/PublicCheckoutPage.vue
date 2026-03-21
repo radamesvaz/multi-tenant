@@ -30,7 +30,7 @@ const form = ref({
   email: '',
   phonePrefix: '',
   phone: '',
-  deliveryDate: '',
+  deliveryAddress: '',
   note: '',
 });
 
@@ -40,16 +40,8 @@ const isValidatingCatalog = ref(false);
 const validationIssues = ref<ValidationIssue[]>([]);
 const showWhatsAppWebHelper = ref(false);
 const whatsappMessage = ref('');
-const statusInfo = ref('');
 
 const homeRoute = computed(() => `/t/${tenantSlug.value}`);
-const cartRoute = computed(() => `/t/${tenantSlug.value}/cart`);
-
-const minDeliveryDate = computed(() => {
-  const now = new Date();
-  now.setDate(now.getDate() + 2);
-  return now.toISOString().slice(0, 10);
-});
 
 const hasBlockingConflicts = computed(() =>
   validationIssues.value.some((issue) =>
@@ -67,7 +59,7 @@ const formattedTotal = computed(() =>
 const submitButtonText = computed(() => {
   if (isSubmitting.value) return 'Procesando...';
   if (isValidatingCatalog.value) return 'Validando carrito...';
-  return 'Realizar Pedido';
+  return 'Realizar pedido';
 });
 
 const canSubmit = computed(() => {
@@ -119,12 +111,6 @@ const validateForm = () => {
   if (numericPhone.length < 7) {
     nextErrors.phone = 'Por favor ingresa el número de teléfono';
   }
-  if (!form.value.deliveryDate) {
-    nextErrors.deliveryDate = 'Por favor elige una fecha de entrega';
-  } else if (form.value.deliveryDate < minDeliveryDate.value) {
-    nextErrors.deliveryDate = 'La fecha debe ser al menos 2 días a partir de hoy';
-  }
-
   errors.value = nextErrors;
   return Object.keys(nextErrors).length === 0;
 };
@@ -136,7 +122,6 @@ const validateCartWithCatalog = async () => {
   }
 
   isValidatingCatalog.value = true;
-  statusInfo.value = 'Estamos verificando disponibilidad y precios...';
 
   try {
     const catalog = await productService.getPublicProducts();
@@ -190,12 +175,7 @@ const validateCartWithCatalog = async () => {
 
     cartStore.replaceItems(nextItems);
     validationIssues.value = issues;
-    statusInfo.value =
-      issues.length === 0
-        ? 'Carrito verificado. Todo listo para confirmar.'
-        : 'Detectamos cambios en tu carrito. Revisa los productos marcados.';
   } catch (error) {
-    statusInfo.value = 'No pudimos validar ahora. Revisa tu conexión e intenta nuevamente.';
     notifyError((error as Error).message);
   } finally {
     isValidatingCatalog.value = false;
@@ -217,7 +197,9 @@ const buildWhatsAppMessage = () => {
   lines.push(`Nombre: ${form.value.name.trim()}`);
   lines.push(`Teléfono: ${form.value.phonePrefix}${form.value.phone.replace(/\D/g, '')}`);
   lines.push(`Email: ${form.value.email.trim()}`);
-  lines.push(`Fecha de entrega: ${new Date(form.value.deliveryDate).toLocaleDateString('es-ES')}`);
+  if (form.value.deliveryAddress.trim()) {
+    lines.push(`Dirección: ${form.value.deliveryAddress.trim()}`);
+  }
   if (form.value.note.trim()) {
     lines.push(`Nota: ${form.value.note.trim()}`);
   }
@@ -234,6 +216,10 @@ const copyWhatsAppMessage = async () => {
   } catch {
     notifyError('No se pudo copiar el mensaje.');
   }
+};
+
+const openGoogleMaps = () => {
+  window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
 };
 
 const openWhatsApp = (message: string) => {
@@ -288,7 +274,8 @@ const submitOrder = async () => {
       name: form.value.name.trim(),
       email: form.value.email.trim(),
       phone: `${form.value.phonePrefix}${form.value.phone.replace(/\D/g, '')}`,
-      delivery_date: form.value.deliveryDate || 'No especificada',
+      delivery_address: form.value.deliveryAddress.trim() || null,
+      delivery_date: null,
       note: form.value.note.trim() || '',
       items: cartStore.items.map((item) => ({
         id_product: item.product.id_product,
@@ -319,17 +306,13 @@ onMounted(() => {
 <template>
   <main class="checkout-page">
     <header class="checkout-page__header">
+      <RouterLink :to="homeRoute" class="checkout-page__back">Volver</RouterLink>
       <h1>Checkout</h1>
       <p>Completa tus datos para confirmar el pedido.</p>
-      <RouterLink :to="cartRoute" class="checkout-page__back">Volver al carrito</RouterLink>
     </header>
 
-    <p class="checkout-page__status" :class="{ 'has-conflicts': hasBlockingConflicts }">
-      {{ statusInfo }}
-    </p>
-
     <section class="checkout-layout">
-      <form class="checkout-form" @submit.prevent="submitOrder">
+      <form id="checkout-form" class="checkout-form" @submit.prevent="submitOrder">
         <div class="form-field">
           <label for="client-name">Nombre</label>
           <input
@@ -379,6 +362,25 @@ onMounted(() => {
         </div>
 
         <div class="form-field">
+          <label for="delivery-address">Dirección de entrega</label>
+          <input
+            id="delivery-address"
+            v-model="form.deliveryAddress"
+            name="deliveryAddress"
+            type="text"
+            placeholder="https://maps.google.com/?q=..."
+          />
+          <button
+            type="button"
+            class="checkout-location-button"
+            @click="openGoogleMaps"
+          >
+            Abrir Google Maps
+          </button>
+        </div>
+
+        <!--
+        <div class="form-field">
           <label for="delivery-date">Fecha de entrega</label>
           <input
             id="delivery-date"
@@ -390,6 +392,7 @@ onMounted(() => {
           />
           <small v-if="errors.deliveryDate">{{ errors.deliveryDate }}</small>
         </div>
+        -->
 
         <div class="form-field">
           <label for="order-note">Nota (opcional)</label>
@@ -400,13 +403,6 @@ onMounted(() => {
             rows="3"
             placeholder="Cualquier solicitud especial..."
           />
-        </div>
-
-        <div class="checkout-form__actions">
-          <button type="submit" :disabled="!canSubmit">{{ submitButtonText }}</button>
-          <button type="button" class="secondary" @click="copyWhatsAppMessage">
-            Copiar mensaje al portapapeles
-          </button>
         </div>
       </form>
 
@@ -422,6 +418,12 @@ onMounted(() => {
         <div class="checkout-summary__total">
           <span>Total</span>
           <strong>{{ formattedTotal }} €</strong>
+        </div>
+        <div class="checkout-form__actions">
+          <button type="submit" form="checkout-form" :disabled="!canSubmit">{{ submitButtonText }}</button>
+          <button type="button" class="secondary" @click="copyWhatsAppMessage">
+            Copiar mensaje al portapapeles
+          </button>
         </div>
       </aside>
     </section>

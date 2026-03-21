@@ -85,7 +85,7 @@ const decrement = (productId: number) => {
         <strong>{{ formattedTotal }} €</strong>
       </div>
       <RouterLink :to="checkoutRoute" class="cart-page__checkout" :aria-disabled="cartStore.items.length === 0">
-        Ir a checkout
+        Finalizar compra
       </RouterLink>
     </footer>
   </main>

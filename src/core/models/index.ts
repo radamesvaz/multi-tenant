@@ -45,6 +45,7 @@ export type CreateOrderPayload = {
   name: string;
   email: string;
   phone: string;
+  delivery_address?: string | null;
   delivery_date: string | null;
   note: string | null;
   items: CreateOrderItemPayload[];

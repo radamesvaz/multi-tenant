@@ -16,25 +16,39 @@
   font-size: var(--font-sm);
 }
 
-.checkout-page__back,
 .checkout-page__home-link {
   color: color-mix(in srgb, var(--tenant-accent) 78%, #102118);
   font-weight: 700;
   text-decoration: none;
 }
 
-.checkout-page__status {
-  margin: 8px 0 14px;
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: color-mix(in srgb, var(--tenant-secondary) 20%, white);
-  border: 1px solid var(--tenant-line);
+.checkout-page__back {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--tenant-accent) 24%, #fff);
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: color-mix(in srgb, var(--tenant-accent) 88%, #102118);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tenant-secondary) 75%, white) 0%,
+    color-mix(in srgb, var(--tenant-primary) 45%, white) 100%
+  );
   font-size: var(--font-sm);
+  font-weight: 700;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--tenant-primary) 18%, transparent);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.checkout-page__status.has-conflicts {
-  background: color-mix(in srgb, #ff9b9b 20%, white);
-  border-color: color-mix(in srgb, #ff9b9b 45%, var(--tenant-line));
+@media (hover: hover) and (pointer: fine) {
+  .checkout-page__back:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px color-mix(in srgb, var(--tenant-primary) 24%, transparent);
+  }
 }
 
 .checkout-layout {
@@ -77,6 +91,24 @@
 .form-field small {
   color: #b00020;
   font-size: var(--font-xs);
+}
+
+.checkout-location-button {
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--tenant-accent) 20%, #fff);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tenant-accent) 88%, #102118);
+  background: color-mix(in srgb, white 85%, var(--tenant-secondary) 15%);
+  cursor: pointer;
+}
+
+.checkout-location-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .phone-grid {

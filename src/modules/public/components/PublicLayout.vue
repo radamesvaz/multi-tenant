@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watchEffect } from 'vue';
-import { RouterView } from 'vue-router';
+import { RouterView, useRoute } from 'vue-router';
 import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
@@ -11,6 +11,7 @@ const { tenantSlug } = useCurrentTenant();
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
 const tenantConfig = computed(() => getMockTenantConfig(tenantSlug.value));
 const cartStore = useCartStore();
+const route = useRoute();
 
 const branding = computed(() => tenantConfig.value.branding);
 const hasLogo = computed(() => !!branding.value.logo_url);
@@ -24,6 +25,9 @@ const cartItemsLabel = computed(() => (cartStore.itemCount === 1 ? 'producto' : 
 const homeRoute = computed(() => `/t/${tenantSlug.value}`);
 const cartRoute = computed(() => `/t/${tenantSlug.value}/cart`);
 const checkoutRoute = computed(() => `/t/${tenantSlug.value}/checkout`);
+const shouldShowCartSummary = computed(
+  () => route.name === 'public-home' && cartStore.itemCount > 0
+);
 
 const tenantThemeStyle = computed(() => ({
   '--tenant-primary': branding.value.primary_color ?? '#2f6d4a',
@@ -113,7 +117,7 @@ watchEffect(() => {
       </nav>
     </header>
 
-    <RouterLink v-if="cartStore.itemCount > 0" :to="checkoutRoute" class="cart-summary-sticky">
+    <RouterLink v-if="shouldShowCartSummary" :to="checkoutRoute" class="cart-summary-sticky">
       {{ cartStore.itemCount }} {{ cartItemsLabel }} · {{ formattedCartTotal }} €
     </RouterLink>
 
