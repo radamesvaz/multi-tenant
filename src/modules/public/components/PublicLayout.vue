@@ -3,6 +3,7 @@ import { computed, watchEffect } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
+import { BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useCartStore } from '../store/cart';
 import './PublicLayout.css';
@@ -96,7 +97,7 @@ watchEffect(() => {
 <template>
   <div class="store-layout" :style="tenantThemeStyle">
     <header class="public-layout__header">
-      <RouterLink :to="homeRoute" class="store-brand">
+      <BaseLink :to="homeRoute" class="store-brand">
         <img
           v-if="hasLogo"
           :src="branding.logo_url || ''"
@@ -107,19 +108,19 @@ watchEffect(() => {
         <span v-else class="store-brand__text">
           {{ tenantUiConfig.displayName }}
         </span>
-      </RouterLink>
+      </BaseLink>
       <nav class="store-nav">
-        <RouterLink :to="homeRoute">Inicio</RouterLink>
-        <RouterLink :to="cartRoute">
+        <BaseLink :to="homeRoute">Inicio</BaseLink>
+        <BaseLink :to="cartRoute">
           Carrito
           <span class="store-nav__badge">{{ cartStore.itemCount }}</span>
-        </RouterLink>
+        </BaseLink>
       </nav>
     </header>
 
-    <RouterLink v-if="shouldShowCartSummary" :to="checkoutRoute" class="cart-summary-sticky">
+    <BaseLink v-if="shouldShowCartSummary" :to="checkoutRoute" class="cart-summary-sticky">
       {{ cartStore.itemCount }} {{ cartItemsLabel }} · {{ formattedCartTotal }} €
-    </RouterLink>
+    </BaseLink>
 
     <main class="public-layout__content">
       <RouterView />

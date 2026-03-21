@@ -1,10 +1,12 @@
 <script lang="ts">
 import { computed, defineComponent, onUnmounted, ref, watch } from 'vue';
 import type { Product } from '../../../core/models';
+import { BaseButton } from '../../../shared/components';
 import './ProductGallery.css';
 
 export default defineComponent({
   name: 'ProductGallery',
+  components: { BaseButton },
   props: {
     product: {
       type: Object as () => Product,
@@ -249,16 +251,17 @@ export default defineComponent({
     </div>
 
     <div class="product-gallery__thumbnails">
-      <button
+      <BaseButton
         v-for="(img, index) in galleryImages"
         :key="`thumb-${img}-${index}`"
+        unstyled
         type="button"
         :aria-label="`Ver imagen ${index + 1} de ${galleryImages.length}`"
-        @click="selectImage(index)"
         :class="{ 'is-active': index === activeImageIndex }"
+        @click="selectImage(index)"
       >
         <img :src="img" :alt="`${product.name} - miniatura ${index + 1}`" />
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>

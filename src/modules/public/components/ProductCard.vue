@@ -1,41 +1,32 @@
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import type { Product } from '../../../core/models';
+import { BaseButton } from '../../../shared/components';
 import './ProductCard.css';
 
-export default defineComponent({
-  name: 'ProductCard',
-  props: {
-    product: {
-      type: Object as () => Product,
-      required: true,
-    },
-    quantity: {
-      type: Number,
-      required: true,
-    },
-  },
-  emits: ['open', 'increment', 'decrement'],
-  setup(props, { emit }) {
-    const handleClick = () => {
-      emit('open', props.product);
-    };
+defineOptions({ name: 'ProductCard' });
 
-    const increment = () => {
-      emit('increment', props.product);
-    };
+const props = defineProps<{
+  product: Product;
+  quantity: number;
+}>();
 
-    const decrement = () => {
-      emit('decrement', props.product);
-    };
+const emit = defineEmits<{
+  open: [product: Product];
+  increment: [product: Product];
+  decrement: [product: Product];
+}>();
 
-    return {
-      handleClick,
-      increment,
-      decrement,
-    };
-  },
-});
+const handleClick = () => {
+  emit('open', props.product);
+};
+
+const increment = () => {
+  emit('increment', props.product);
+};
+
+const decrement = () => {
+  emit('decrement', props.product);
+};
 </script>
 
 <template>
@@ -62,26 +53,27 @@ export default defineComponent({
         {{ product.price.toFixed(2) }} €
       </p>
       <div class="product-card__actions" @click.stop>
-        <button
+        <BaseButton
           v-if="quantity > 0"
+          unstyled
           type="button"
           class="qty-btn"
           :disabled="!product.available"
           @click="decrement"
         >
           -1
-        </button>
+        </BaseButton>
         <span class="qty-value">{{ quantity }}</span>
-        <button
+        <BaseButton
+          unstyled
           type="button"
           class="qty-btn"
           :disabled="!product.available"
           @click="increment"
         >
           +1
-        </button>
+        </BaseButton>
       </div>
     </div>
   </article>
 </template>
-

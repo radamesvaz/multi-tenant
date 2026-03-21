@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
+import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useCartStore } from '../store/cart';
 import './PublicCartPage.css';
@@ -67,13 +67,23 @@ const decrement = (productId: number) => {
             Subtotal: {{ getItemSubtotal(item.product.price, item.quantity) }} €
           </p>
           <div class="cart-item__actions">
-            <button type="button" class="qty-btn" @click="decrement(item.product.id_product)">
+            <BaseButton
+              unstyled
+              type="button"
+              class="qty-btn"
+              @click="decrement(item.product.id_product)"
+            >
               -1
-            </button>
+            </BaseButton>
             <span class="qty-value">{{ item.quantity }}</span>
-            <button type="button" class="qty-btn" @click="increment(item.product.id_product)">
+            <BaseButton
+              unstyled
+              type="button"
+              class="qty-btn"
+              @click="increment(item.product.id_product)"
+            >
               +1
-            </button>
+            </BaseButton>
           </div>
         </div>
       </article>
@@ -84,9 +94,13 @@ const decrement = (productId: number) => {
         <span>Total</span>
         <strong>{{ formattedTotal }} €</strong>
       </div>
-      <RouterLink :to="checkoutRoute" class="cart-page__checkout" :aria-disabled="cartStore.items.length === 0">
+      <BaseLink
+        :to="checkoutRoute"
+        class="cart-page__checkout"
+        :aria-disabled="cartStore.items.length === 0"
+      >
         Finalizar compra
-      </RouterLink>
+      </BaseLink>
     </footer>
   </main>
 </template>
