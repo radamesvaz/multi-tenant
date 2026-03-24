@@ -6,6 +6,7 @@ import type {
   Order,
   Product,
   TenantBranding,
+  LoginRequestBody,
 } from '../models';
 import { mockProducts, getMockProductById } from '../mocks';
 
@@ -64,10 +65,13 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
 }
 
 export const authService = {
-  loginTenant(tenantSlug: string, email: string, password: string) {
-    return httpRequest<AuthTokenResponse>(`/t/${tenantSlug}/auth/login`, {
+  /**
+   * Tenant login: `POST /t/{tenant_slug}/auth/login` — body is email + password only; tenant is taken from the path.
+   */
+  loginTenant(tenantSlug: string, body: LoginRequestBody) {
+    return httpRequest<AuthTokenResponse>(`/t/${encodeURIComponent(tenantSlug)}/auth/login`, {
       method: 'POST',
-      body: { email, password },
+      body,
     });
   },
 };

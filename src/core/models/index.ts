@@ -77,6 +77,12 @@ export type AuthTokenResponse = {
   token: string;
 };
 
+/** POST /t/{tenant_slug}/auth/login — tenant comes from the path; body is only credentials. */
+export type LoginRequestBody = {
+  email: string;
+  password: string;
+};
+
 export type ApiErrorResponse = {
   error: string;
   code?: string;

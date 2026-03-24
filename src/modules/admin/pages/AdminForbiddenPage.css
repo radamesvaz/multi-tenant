@@ -1,0 +1,23 @@
+.admin-forbidden {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-forbidden__card {
+  max-width: 28rem;
+  text-align: center;
+}
+
+.admin-forbidden__btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.admin-forbidden__link {
+  display: block;
+  margin-top: 1rem;
+}
