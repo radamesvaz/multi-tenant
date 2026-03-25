@@ -8,6 +8,7 @@ import type {
   Product,
   TenantBranding,
   LoginRequestBody,
+  UpdateAuthOrderPayload,
 } from '../models';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -55,6 +56,60 @@ function parseOrderItem(raw: unknown): OrderItem {
   };
 }
 
+/**
+ * Maps API strings to backend `OrderStatus` values (`GET /auth/orders`).
+ * Includes legacy spellings / old FE values where useful.
+ */
+function normalizeOrderStatus(raw: unknown): Order['status'] {
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+  const aliases: Record<string, Order['status']> = {
+    pending: 'pending',
+    preparing: 'preparing',
+    ready: 'ready',
+    delivered: 'delivered',
+    cancelled: 'cancelled',
+    canceled: 'cancelled',
+    cancel: 'cancelled',
+    expired: 'expired',
+    deleted: 'deleted',
+    // legacy / alternate
+    confirmed: 'preparing',
+    paid: 'delivered',
+    delivery: 'delivered',
+  };
+
+  if (aliases[key]) {
+    return aliases[key];
+  }
+
+  const allowed: Order['status'][] = [
+    'pending',
+    'preparing',
+    'ready',
+    'delivered',
+    'cancelled',
+    'expired',
+    'deleted',
+  ];
+  if (allowed.includes(key as Order['status'])) {
+    return key as Order['status'];
+  }
+
+  return 'pending';
+}
+
+/** `PATCH` may return `{ message: string }` instead of the full order. */
+function patchResponseIsFullOrder(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const r = raw as Record<string, unknown>;
+  if (r.id_order == null || r.id_order === '') return false;
+  return Number.isFinite(Number(r.id_order));
+}
+
 function parseOrder(raw: unknown): Order {
   const r = raw as Record<string, unknown>;
   const rawItems = r.OrderItems ?? r.order_items;
@@ -66,7 +121,7 @@ function parseOrder(raw: unknown): Order {
     id_user: idUser == null || idUser === '' ? null : Number(idUser),
     user_name: r.user_name == null ? null : String(r.user_name),
     phone: r.phone == null ? null : String(r.phone),
-    status: String(r.status) as Order['status'],
+    status: normalizeOrderStatus(r.status),
     total_price: Number(r.total_price),
     note: r.note == null ? null : String(r.note),
     delivery_direction: r.delivery_direction == null ? null : String(r.delivery_direction),
@@ -197,6 +252,22 @@ export const orderService = {
       token,
     });
     return parseOrder(raw);
+  },
+
+  /**
+   * `PATCH /auth/orders/{id}` — `Authorization: Bearer`, `Content-Type: application/json`.
+   * Body (optional fields): `status`, `paid`, `cancellation_reason`.
+   */
+  async updateAuthOrder(token: string, id: number, payload: UpdateAuthOrderPayload) {
+    const raw = await httpRequest<unknown>(`/auth/orders/${id}`, {
+      method: 'PATCH',
+      token,
+      body: payload,
+    });
+    if (patchResponseIsFullOrder(raw)) {
+      return parseOrder(raw);
+    }
+    return this.getAuthOrderById(token, id);
   },
 
   async createPublicOrder(tenantSlug: string, payload: CreateOrderPayload) {

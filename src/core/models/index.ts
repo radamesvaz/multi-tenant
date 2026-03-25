@@ -24,7 +24,18 @@ export type OrderItem = {
   quantity: number;
 };
 
-export type OrderStatus = 'pending' | 'confirmed' | 'canceled' | 'delivered' | 'paid';
+/** Values returned by `GET` / stored in domain (see backend `OrderStatus`). */
+export type OrderStatus =
+  | 'pending'
+  | 'preparing'
+  | 'ready'
+  | 'delivered'
+  | 'cancelled'
+  | 'expired'
+  | 'deleted';
+
+/** Subset allowed in `PATCH /auth/orders/{id}` for `status` (server rejects others). */
+export type OrderPatchableStatus = 'preparing' | 'ready' | 'delivered' | 'cancelled' | 'deleted';
 
 export type Order = {
   id_order: number;
@@ -42,6 +53,13 @@ export type Order = {
   paid: boolean;
   expires_at: string | null;
   order_items: OrderItem[];
+};
+
+/** Body for `PATCH /auth/orders/{id}` — fields optional (`omitempty` on server). */
+export type UpdateAuthOrderPayload = {
+  status?: OrderPatchableStatus;
+  paid?: boolean;
+  cancellation_reason?: string | null;
 };
 
 export type CreateOrderItemPayload = {

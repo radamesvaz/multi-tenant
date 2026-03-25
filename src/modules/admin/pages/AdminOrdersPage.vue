@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import type { Order } from '../../../core/models';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import {
+  isPatchableOrderStatus,
+  ORDER_STATUS_LABELS,
+  PATCHABLE_ORDER_STATUSES,
+} from '../../../core/enums';
+import type { 
+  Order, 
+  OrderPatchableStatus, 
+  OrderStatus, 
+  UpdateAuthOrderPayload, 
+} from '../../../core/models';
 import { osmEmbedUrl, resolveLatLngForMapsUrl } from '../../../core/utils';
+import { orderService } from '../../../core/services';
+import { useAuthStore } from '../../../shared/store';
 import { useOrdersStore } from '../store';
 import './AdminOrdersPage.css';
 
@@ -13,6 +25,71 @@ const mapPreviewSrc = ref<string | null>(null);
 const mapPreviewLoading = ref(false);
 const mapPreviewFailed = ref(false);
 let mapPreviewAbort: AbortController | null = null;
+
+/** Current value (read-only if `pending` / `expired`) + patchable transitions. */
+const orderStatusSelectOptions = computed(
+  (): Array<{ value: OrderStatus; label: string; disabled?: boolean }> => {
+    const order = selectedOrder.value;
+    if (!order) return [];
+
+    const patchable = PATCHABLE_ORDER_STATUSES.map((value) => ({
+      value,
+      label: ORDER_STATUS_LABELS[value],
+    }));
+
+    if (!isPatchableOrderStatus(order.status)) {
+      return [
+        {
+          value: order.status,
+          label: ORDER_STATUS_LABELS[order.status],
+          disabled: true,
+        },
+        ...patchable,
+      ];
+    }
+
+    return patchable;
+  },
+);
+
+const isUpdatingOrder = ref(false);
+const updateOrderError = ref<string | null>(null);
+let lastDeliveryDirection: string | null = null;
+
+type MapsLinkCopyState = 'idle' | 'ok' | 'err';
+const mapsLinkCopyState = ref<MapsLinkCopyState>('idle');
+let mapsCopyResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetMapsCopyFeedback() {
+  if (mapsCopyResetTimer) {
+    clearTimeout(mapsCopyResetTimer);
+    mapsCopyResetTimer = null;
+  }
+  mapsLinkCopyState.value = 'idle';
+}
+
+async function copyDeliveryMapsLink() {
+  const url = selectedOrder.value?.delivery_direction?.trim();
+  if (!url) return;
+  resetMapsCopyFeedback();
+  try {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error('Clipboard API not available');
+    }
+    await navigator.clipboard.writeText(url);
+    mapsLinkCopyState.value = 'ok';
+    mapsCopyResetTimer = setTimeout(() => {
+      mapsLinkCopyState.value = 'idle';
+      mapsCopyResetTimer = null;
+    }, 2200);
+  } catch {
+    mapsLinkCopyState.value = 'err';
+    mapsCopyResetTimer = setTimeout(() => {
+      mapsLinkCopyState.value = 'idle';
+      mapsCopyResetTimer = null;
+    }, 3500);
+  }
+}
 
 let removeKeyListener: (() => void) | undefined;
 onMounted(() => {
@@ -27,7 +104,29 @@ onMounted(() => {
 });
 
 watch(selectedOrder, async (order) => {
+  resetMapsCopyFeedback();
+
   document.body.style.overflow = order ? 'hidden' : '';
+
+  const url = order?.delivery_direction?.trim() ?? null;
+  const normalizedUrl = url || null;
+
+  if (!order) {
+    lastDeliveryDirection = null;
+    mapPreviewAbort?.abort();
+    mapPreviewAbort = null;
+    mapPreviewSrc.value = null;
+    mapPreviewFailed.value = false;
+    mapPreviewLoading.value = false;
+    return;
+  }
+
+  // Skip reloading the map when only non-address fields changed.
+  if (normalizedUrl === lastDeliveryDirection) {
+    return;
+  }
+
+  lastDeliveryDirection = normalizedUrl;
 
   mapPreviewAbort?.abort();
   mapPreviewAbort = null;
@@ -35,16 +134,13 @@ watch(selectedOrder, async (order) => {
   mapPreviewFailed.value = false;
   mapPreviewLoading.value = false;
 
-  const url = order?.delivery_direction?.trim();
-  if (!url) {
-    return;
-  }
+  if (!normalizedUrl) return;
 
   mapPreviewLoading.value = true;
   const ac = new AbortController();
   mapPreviewAbort = ac;
   try {
-    const coords = await resolveLatLngForMapsUrl(url, ac.signal);
+    const coords = await resolveLatLngForMapsUrl(normalizedUrl, ac.signal);
     if (ac.signal.aborted) {
       return;
     }
@@ -64,7 +160,65 @@ watch(selectedOrder, async (order) => {
   }
 });
 
+async function persistOrderPatch(patch: UpdateAuthOrderPayload) {
+  if (!selectedOrder.value) return;
+  if (isUpdatingOrder.value) return;
+
+  isUpdatingOrder.value = true;
+  updateOrderError.value = null;
+
+  try {
+    type UpdateOrderFn = (id_order: number, patch: UpdateAuthOrderPayload) => Promise<Order>;
+
+    const updateOrderFn = (ordersStore as unknown as { updateOrder?: UpdateOrderFn }).updateOrder;
+
+    // With HMR, the store instance may not expose a newly added action yet.
+    // If `updateOrder` is missing, persist via the order service directly.
+    const updated =
+      updateOrderFn
+        ? await updateOrderFn(selectedOrder.value.id_order, patch)
+        : await (async () => {
+            const id = selectedOrder.value?.id_order;
+            if (!id) {
+              throw new Error('Invalid order.');
+            }
+            const authStore = useAuthStore();
+            const tenantSlug = authStore.getActiveAdminTenantSlug();
+            const token = authStore.getToken(tenantSlug);
+
+            if (!token) {
+              throw new Error('Invalid session. Please sign in again.');
+            }
+
+            const u = await orderService.updateAuthOrder(token, id, patch);
+            ordersStore.orders = ordersStore.orders.map((o) =>
+              o.id_order === id ? u : o,
+            );
+            return u;
+          })();
+    selectedOrder.value = updated;
+  } catch (error) {
+    updateOrderError.value = (error as Error).message;
+  } finally {
+    isUpdatingOrder.value = false;
+  }
+}
+
+function onOrderStatusChange(e: Event) {
+  const value = (e.target as HTMLSelectElement).value as OrderPatchableStatus;
+  if (!PATCHABLE_ORDER_STATUSES.includes(value)) {
+    return;
+  }
+  persistOrderPatch({ status: value });
+}
+
+function onPaidChange(e: Event) {
+  const value = (e.target as HTMLSelectElement).value === 'true';
+  persistOrderPatch({ paid: value });
+}
+
 onUnmounted(() => {
+  resetMapsCopyFeedback();
   document.body.style.overflow = '';
   removeKeyListener?.();
 });
@@ -107,8 +261,8 @@ function lineSubtotal(unit: number, qty: number) {
     <header class="admin-orders__header">
       <h1>Órdenes</h1>
       <p class="admin-orders__subtitle">
-        Pedidos del tenant según el JWT (<code>GET /auth/orders</code>, <code>Authorization: Bearer</code>). Hacé clic
-        en una fila para ver el detalle completo.
+        Tenant orders from the JWT (<code>GET /auth/orders</code>, <code>Authorization: Bearer</code>). Click a row to
+        open full details.
       </p>
     </header>
 
@@ -138,7 +292,10 @@ function lineSubtotal(unit: number, qty: number) {
           <tr
             v-for="o in ordersStore.orders"
             :key="o.id_order"
-            class="admin-orders__row"
+            :class="[
+              'admin-orders__row',
+              o.paid ? 'admin-orders__row--paid' : 'admin-orders__row--unpaid',
+            ]"
             tabindex="0"
             @click="openModal(o)"
             @keydown.enter.prevent="openModal(o)"
@@ -150,7 +307,18 @@ function lineSubtotal(unit: number, qty: number) {
             <td class="admin-orders__cell-text" data-label="Teléfono">{{ o.phone ?? '—' }}</td>
             <td data-label="Estado"><span class="admin-orders__badge">{{ o.status }}</span></td>
             <td data-label="Total">{{ formatMoney(o.total_price) }}</td>
-            <td data-label="Pagado">{{ o.paid ? 'Sí' : 'No' }}</td>
+            <td
+              data-label="Pagado"
+              :class="[
+                'admin-orders__paid-cell',
+                o.paid ? 'admin-orders__paid-cell--yes' : 'admin-orders__paid-cell--no',
+              ]"
+            >
+              <span class="admin-orders__paid-value">
+                <span class="admin-orders__paid-indicator" aria-hidden="true" />
+                <span>{{ o.paid ? 'Sí' : 'No' }}</span>
+              </span>
+            </td>
             <td data-label="Ítems">{{ o.order_items.length }}</td>
           </tr>
         </tbody>
@@ -175,52 +343,13 @@ function lineSubtotal(unit: number, qty: number) {
           </button>
         </header>
 
-        <section v-if="selectedOrder.delivery_direction" class="admin-order-modal__maps">
-          <h3 class="admin-order-modal__section-title">Dirección de entrega</h3>
-          <p class="admin-order-modal__maps-caption">
-            Vista previa con OpenStreetMap (sin scripts de Google) para evitar bloqueos de extensiones.
-          </p>
-          <div v-if="mapPreviewLoading" class="admin-order-modal__maps-loading">Cargando mapa…</div>
-          <div v-else-if="mapPreviewSrc" class="admin-order-modal__maps-embed">
-            <iframe
-              class="admin-order-modal__maps-frame"
-              :src="mapPreviewSrc"
-              title="Vista previa del mapa (OpenStreetMap)"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-            />
-          </div>
-          <p v-else-if="mapPreviewFailed" class="admin-order-modal__maps-hint" role="status">
-            No pudimos obtener coordenadas para la vista previa (enlace corto, red o proxy bloqueado).
-            Usá el enlace de abajo para abrir Google Maps en otra pestaña.
-          </p>
-          <a
-            class="admin-order-modal__maps-link"
-            :href="selectedOrder.delivery_direction"
-            target="_blank"
-            rel="noopener noreferrer"
-            @click.stop
-          >
-            Abrir en Google Maps en una pestaña nueva
-          </a>
-          <p class="admin-order-modal__maps-url">{{ selectedOrder.delivery_direction }}</p>
-        </section>
+        <div v-if="updateOrderError" class="admin-order-modal__inline-error" role="alert">
+          {{ updateOrderError }}
+        </div>
 
         <section class="admin-order-modal__section">
           <h3 class="admin-order-modal__section-title">Datos generales</h3>
           <dl class="admin-order-modal__dl">
-            <div class="admin-order-modal__dl-row">
-              <dt>ID orden</dt>
-              <dd>{{ selectedOrder.id_order }}</dd>
-            </div>
-            <div class="admin-order-modal__dl-row">
-              <dt>Tenant</dt>
-              <dd>{{ selectedOrder.tenant_id }}</dd>
-            </div>
-            <div class="admin-order-modal__dl-row">
-              <dt>Usuario (id)</dt>
-              <dd>{{ selectedOrder.id_user ?? '—' }}</dd>
-            </div>
             <div class="admin-order-modal__dl-row">
               <dt>Cliente</dt>
               <dd>{{ selectedOrder.user_name ?? '—' }}</dd>
@@ -230,9 +359,23 @@ function lineSubtotal(unit: number, qty: number) {
               <dd>{{ selectedOrder.phone ?? '—' }}</dd>
             </div>
             <div class="admin-order-modal__dl-row">
-              <dt>Estado</dt>
+              <dt>Estado de la orden</dt>
               <dd>
-                <span class="admin-orders__badge">{{ selectedOrder.status }}</span>
+                <select
+                  class="admin-order-modal__select"
+                  :disabled="isUpdatingOrder"
+                  :value="selectedOrder.status"
+                  @change="onOrderStatusChange"
+                >
+                  <option
+                    v-for="opt in orderStatusSelectOptions"
+                    :key="`${opt.value}-${opt.disabled ? 'ro' : 'rw'}`"
+                    :value="opt.value"
+                    :disabled="opt.disabled"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
               </dd>
             </div>
             <div class="admin-order-modal__dl-row">
@@ -240,16 +383,22 @@ function lineSubtotal(unit: number, qty: number) {
               <dd>{{ formatMoney(selectedOrder.total_price) }}</dd>
             </div>
             <div class="admin-order-modal__dl-row">
-              <dt>Pagado</dt>
-              <dd>{{ selectedOrder.paid ? 'Sí' : 'No' }}</dd>
+              <dt>Estado de pago</dt>
+              <dd>
+                <select
+                  class="admin-order-modal__select"
+                  :disabled="isUpdatingOrder"
+                  :value="selectedOrder.paid ? 'true' : 'false'"
+                  @change="onPaidChange"
+                >
+                  <option value="true">Pagado</option>
+                  <option value="false">No pagado</option>
+                </select>
+              </dd>
             </div>
             <div class="admin-order-modal__dl-row">
               <dt>Nota</dt>
               <dd class="admin-order-modal__multiline">{{ selectedOrder.note ?? '—' }}</dd>
-            </div>
-            <div v-if="!selectedOrder.delivery_direction" class="admin-order-modal__dl-row">
-              <dt>Dirección / maps</dt>
-              <dd>—</dd>
             </div>
             <div class="admin-order-modal__dl-row">
               <dt>Creada</dt>
@@ -288,6 +437,58 @@ function lineSubtotal(unit: number, qty: number) {
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section v-if="selectedOrder.delivery_direction" class="admin-order-modal__maps">
+          <h3 class="admin-order-modal__section-title">Dirección de entrega</h3>
+          <p class="admin-order-modal__maps-caption">
+            OpenStreetMap preview (no Google scripts) to reduce extension blocking.
+          </p>
+          <div v-if="mapPreviewLoading" class="admin-order-modal__maps-loading">Cargando mapa…</div>
+          <div v-else-if="mapPreviewSrc" class="admin-order-modal__maps-embed">
+            <iframe
+              class="admin-order-modal__maps-frame"
+              :src="mapPreviewSrc"
+              title="Map preview (OpenStreetMap)"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <p v-else-if="mapPreviewFailed" class="admin-order-modal__maps-hint" role="status">
+            Could not resolve coordinates for the preview (short link, network, or blocked proxy). Use the link below
+            to open Google Maps in a new tab.
+          </p>
+          <a
+            class="admin-order-modal__maps-link"
+            :href="selectedOrder.delivery_direction"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click.stop
+          >
+            Abrir en Google Maps en una pestaña nueva
+          </a>
+          <div class="admin-order-modal__maps-url-row">
+            <p class="admin-order-modal__maps-url">{{ selectedOrder.delivery_direction }}</p>
+            <button
+              type="button"
+              class="admin-order-modal__maps-copy-btn"
+              @click.stop="copyDeliveryMapsLink"
+            >
+              {{ mapsLinkCopyState === 'ok' ? 'Copiado' : 'Copiar enlace' }}
+            </button>
+          </div>
+          <p
+            v-if="mapsLinkCopyState === 'err'"
+            class="admin-order-modal__maps-copy-err"
+            role="status"
+          >
+            Could not copy. Select the link text above and copy it manually.
+          </p>
+        </section>
+
+        <section v-else class="admin-order-modal__maps">
+          <h3 class="admin-order-modal__section-title">Dirección de entrega</h3>
+          <p class="admin-order-modal__maps-hint" role="status">—</p>
         </section>
       </div>
     </div>
