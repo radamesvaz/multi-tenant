@@ -60,7 +60,7 @@ async function onSubmit() {
       return;
     }
 
-    await router.replace(redirectTarget.value ?? { name: 'admin-dashboard' });
+    await router.replace(redirectTarget.value ?? { name: 'admin-orders' });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'No se pudo iniciar sesión.';
     errorMessage.value = message;

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { Product } from '../../../core/models';
 import { productService } from '../../../core/services';
+import { useAuthStore } from '../../../shared/store';
 
 type AdminProductsState = {
   products: Product[];
@@ -19,11 +20,15 @@ export const useAdminProductsStore = defineStore('admin-products', {
       this.isLoading = true;
       this.error = null;
 
+      const authStore = useAuthStore();
+      const tenantSlug = authStore.getActiveAdminTenantSlug();
+      const token = authStore.getToken(tenantSlug);
+
       try {
-        // TODO: replace with authenticated /auth/products endpoint when available
-        this.products = await productService.getPublicProducts();
+        this.products = await productService.listTenantProducts(tenantSlug, { token });
       } catch (error) {
-        this.error = (error as Error).message;
+        const code = (error as Error & { code?: string }).code;
+        this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
       } finally {
         this.isLoading = false;
       }

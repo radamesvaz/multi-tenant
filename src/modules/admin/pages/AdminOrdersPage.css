@@ -1,0 +1,309 @@
+.admin-orders__header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-orders__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.admin-orders__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c6360;
+}
+
+.admin-orders__subtitle code {
+  font-size: 0.82rem;
+}
+
+.admin-orders__state {
+  padding: 1rem 0;
+  color: #5c6360;
+}
+
+.admin-orders__state--error {
+  color: #b00020;
+}
+
+.admin-orders__table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dde2dd;
+  border-radius: 6px;
+}
+
+.admin-orders__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.admin-orders__table th,
+.admin-orders__table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid #eef0ee;
+}
+
+.admin-orders__table th {
+  font-weight: 600;
+  background: #f7f8f7;
+}
+
+.admin-orders__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-orders__id {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-orders__cell-text {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-orders__badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #eef0ee;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.admin-orders__row {
+  cursor: pointer;
+}
+
+.admin-orders__row:hover {
+  background: #f5f7f5;
+}
+
+.admin-orders__row:focus-visible {
+  outline: 2px solid #2d6a4f;
+  outline-offset: -2px;
+}
+
+/* Modal detalle orden */
+.admin-order-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.admin-order-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.admin-order-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 100%);
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.admin-order-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #dde2dd;
+}
+
+.admin-order-modal__title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.admin-order-modal__close {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #5c6360;
+}
+
+.admin-order-modal__close:hover {
+  background: #eef0ee;
+  color: #1a1c1a;
+}
+
+.admin-order-modal__maps {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border-radius: 6px;
+  background: #e8f4ea;
+  border: 1px solid #b7e0c0;
+}
+
+.admin-order-modal__maps-caption {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #3d5a42;
+}
+
+.admin-order-modal__maps-loading {
+  margin: 0.5rem 0 0.75rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #5c6360;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px dashed #9ccb9f;
+}
+
+.admin-order-modal__maps-hint {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #5c4a1a;
+  background: #fff9e6;
+  border: 1px solid #e6d08c;
+  border-radius: 6px;
+}
+
+.admin-order-modal__maps-embed {
+  margin: 0.5rem 0 0.75rem;
+  height: 220px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #9ccb9f;
+  background: #fff;
+}
+
+.admin-order-modal__maps-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.admin-order-modal__section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #2d4a32;
+}
+
+.admin-order-modal__maps-link {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+  color: #1b5e20;
+  text-decoration: underline;
+}
+
+.admin-order-modal__maps-link:hover {
+  color: #0d3d12;
+}
+
+.admin-order-modal__maps-url {
+  margin: 0;
+  font-size: 0.8rem;
+  word-break: break-all;
+  color: #3d5a42;
+}
+
+.admin-order-modal__section {
+  margin-bottom: 1.25rem;
+}
+
+.admin-order-modal__section:last-child {
+  margin-bottom: 0;
+}
+
+.admin-order-modal__dl {
+  margin: 0;
+}
+
+.admin-order-modal__dl-row {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.35rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f0f2f0;
+  font-size: 0.92rem;
+}
+
+.admin-order-modal__dl-row:last-child {
+  border-bottom: none;
+}
+
+.admin-order-modal__dl-row dt {
+  margin: 0;
+  color: #5c6360;
+  font-weight: 500;
+}
+
+.admin-order-modal__dl-row dd {
+  margin: 0;
+}
+
+.admin-order-modal__multiline {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-order-modal__table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dde2dd;
+  border-radius: 6px;
+}
+
+.admin-order-modal__items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-order-modal__items-table th,
+.admin-order-modal__items-table td {
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid #eef0ee;
+}
+
+.admin-order-modal__items-table th {
+  font-weight: 600;
+  background: #f7f8f7;
+  white-space: nowrap;
+}
+
+.admin-order-modal__items-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-order-modal__num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

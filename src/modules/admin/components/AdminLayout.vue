@@ -8,7 +8,7 @@ import './AdminLayout.css';
     <aside class="admin-layout__sidebar">
       <h2>Admin</h2>
       <nav class="admin-layout__nav">
-        <RouterLink :to="{ name: 'admin-dashboard' }">Dashboard</RouterLink>
+        <RouterLink :to="{ name: 'admin-orders' }">Órdenes</RouterLink>
         <RouterLink :to="{ name: 'admin-products' }">Productos</RouterLink>
       </nav>
     </aside>

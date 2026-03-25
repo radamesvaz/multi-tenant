@@ -14,11 +14,14 @@ export type Product = {
   created_on: string;
 };
 
+/** Order line as returned by `GET /auth/orders` (nested items in `OrderItems` or `order_items`). */
 export type OrderItem = {
+  id_order_item: number;
+  id_order: number;
   id_product: number;
-  quantity: number;
+  name: string;
   unit_price: number;
-  total_price: number;
+  quantity: number;
 };
 
 export type OrderStatus = 'pending' | 'confirmed' | 'canceled' | 'delivered' | 'paid';
@@ -27,12 +30,17 @@ export type Order = {
   id_order: number;
   tenant_id: number;
   id_user: number | null;
+  user_name: string | null;
+  phone: string | null;
   status: OrderStatus;
   total_price: number;
   note: string | null;
+  /** Maps link or other delivery address value returned by backend. */
+  delivery_direction: string | null;
   created_on: string;
   delivery_date: string | null;
   paid: boolean;
+  expires_at: string | null;
   order_items: OrderItem[];
 };
 

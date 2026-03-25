@@ -62,7 +62,7 @@ router.beforeEach((to) => {
       return true;
     }
     if (authStore.isAdminForTenant(tenantSlug)) {
-      return { name: 'admin-dashboard', query: to.query };
+      return { name: 'admin-orders', query: to.query };
     }
     return { name: 'admin-forbidden' };
   }
@@ -71,6 +71,7 @@ router.beforeEach((to) => {
     return true;
   }
 
+  /** `isAuthenticatedForTenant` clears token when JWT `exp` is expired. */
   if (!authStore.isAuthenticatedForTenant(tenantSlug)) {
     return {
       name: 'admin-login',

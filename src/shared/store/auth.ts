@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { envConfig } from '../../core/config';
-import { roleIdFromJwt } from '../../core/utils/jwt';
+import { isJwtExpired, roleIdFromJwt } from '../../core/utils/jwt';
 import { JWT_ROLE_ADMIN } from '../constants/jwtRoles';
 import { ADMIN_TENANT_CONTEXT_KEY, tokenStorageKey } from '../constants/storageKeys';
 
@@ -42,11 +42,21 @@ export const useAuthStore = defineStore('auth', {
       return persistedToken;
     },
     isAuthenticatedForTenant(tenantSlug: string) {
-      return Boolean(this.getToken(tenantSlug));
+      const token = this.getToken(tenantSlug);
+      if (!token) return false;
+      if (isJwtExpired(token)) {
+        this.clearToken(tenantSlug);
+        return false;
+      }
+      return true;
     },
     isAdminForTenant(tenantSlug: string) {
       const token = this.getToken(tenantSlug);
       if (!token) return false;
+      if (isJwtExpired(token)) {
+        this.clearToken(tenantSlug);
+        return false;
+      }
       return roleIdFromJwt(token) === JWT_ROLE_ADMIN;
     },
   },

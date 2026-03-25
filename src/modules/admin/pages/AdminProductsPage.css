@@ -1,0 +1,69 @@
+.admin-products__header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-products__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.admin-products__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c6360;
+}
+
+.admin-products__subtitle code {
+  font-size: 0.82rem;
+}
+
+.admin-products__state {
+  padding: 1rem 0;
+  color: #5c6360;
+}
+
+.admin-products__state--error {
+  color: #b00020;
+}
+
+.admin-products__table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dde2dd;
+  border-radius: 6px;
+}
+
+.admin-products__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.admin-products__table th,
+.admin-products__table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid #eef0ee;
+}
+
+.admin-products__table th {
+  font-weight: 600;
+  background: #f7f8f7;
+}
+
+.admin-products__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-products__name {
+  font-weight: 500;
+  max-width: 18rem;
+}
+
+.admin-products__badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #eef0ee;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}

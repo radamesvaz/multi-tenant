@@ -26,12 +26,12 @@ export const adminRoutes = [
     children: [
       {
         path: '',
-        redirect: { name: 'admin-dashboard' },
+        redirect: { name: 'admin-orders' },
       },
       {
-        path: 'dashboard',
-        name: 'admin-dashboard',
-        component: () => import('../pages/AdminDashboardPage.vue'),
+        path: 'orders',
+        name: 'admin-orders',
+        component: () => import('../pages/AdminOrdersPage.vue'),
         meta: { requiresAuth: true },
       },
       {

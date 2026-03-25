@@ -29,3 +29,22 @@ export function roleIdFromJwt(token: string): number | null {
   }
   return null;
 }
+
+/** JWT `exp` uses UTC epoch seconds. Without a valid `exp`, token is treated as not expired. */
+export function isJwtExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return true;
+
+  const raw = payload.exp;
+  let expSec: number | null = null;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    expSec = raw;
+  } else if (typeof raw === 'string') {
+    const n = Number.parseInt(raw, 10);
+    expSec = Number.isFinite(n) ? n : null;
+  }
+  if (expSec === null) {
+    return false;
+  }
+  return Date.now() / 1000 >= expSec;
+}
