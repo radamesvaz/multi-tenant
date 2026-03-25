@@ -17,24 +17,24 @@ export const usePublicProductsStore = defineStore('public-products', {
     error: null,
   }),
   actions: {
-    async loadProducts() {
+    async loadProducts(tenantSlug: string) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        this.products = await productService.getPublicProducts();
+        this.products = await productService.getPublicProducts(tenantSlug);
       } catch (error) {
         this.error = (error as Error).message;
       } finally {
         this.isLoading = false;
       }
     },
-    async loadProductById(id: number) {
+    async loadProductById(tenantSlug: string, id: number) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        this.selectedProduct = await productService.getProductById(id);
+        this.selectedProduct = await productService.getProductById(tenantSlug, id);
       } catch (error) {
         this.error = (error as Error).message;
       } finally {

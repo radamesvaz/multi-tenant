@@ -4,10 +4,12 @@ import type { Product } from '../../../core/models';
 import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
 import { BaseButton } from '../../../shared/components';
+import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import ProductCard from '../components/ProductCard.vue';
 import ProductGallery from '../components/ProductGallery.vue';
 import './PublicHomePage.css';
 
+const { tenantSlug } = useCurrentTenant();
 const productsStore = usePublicProductsStore();
 const cartStore = useCartStore();
 
@@ -15,7 +17,7 @@ const isModalOpen = ref(false);
 const selectedProduct = ref<Product | null>(null);
 
 onMounted(() => {
-  productsStore.loadProducts();
+  productsStore.loadProducts(tenantSlug.value);
 });
 
 onUnmounted(() => {

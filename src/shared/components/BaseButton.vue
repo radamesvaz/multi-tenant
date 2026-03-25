@@ -5,11 +5,12 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
 withDefaults(
   defineProps<{
-    /** Texto por defecto si no usas slot */
+    /** Default text when no slot is provided. */
     label?: string;
     variant?: ButtonVariant;
     /**
-     * Sin clases del design system: el `<button>` solo recibe attrs (p. ej. `.qty-btn`, estilos de página).
+     * Without design-system classes: `<button>` receives only attrs
+     * (e.g. `.qty-btn`, page-level styles).
      */
     unstyled?: boolean;
   }>(),

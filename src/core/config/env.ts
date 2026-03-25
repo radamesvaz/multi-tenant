@@ -1,4 +1,6 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+/** No trailing slash; paths in services start with `/`. */
+const apiBaseUrl = rawApiBaseUrl?.replace(/\/+$/, '') ?? '';
 const appName = import.meta.env.VITE_APP_NAME ?? 'Multi Tenant Frontend';
 const defaultTenantSlug = import.meta.env.VITE_DEFAULT_TENANT_SLUG ?? 'default';
 const enableDebug = import.meta.env.VITE_ENABLE_DEBUG === 'true';
