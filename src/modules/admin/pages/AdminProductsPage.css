@@ -38,6 +38,59 @@
   font-size: 0.95rem;
 }
 
+@media (max-width: 760px) {
+  .admin-products__table-wrap {
+    border: none;
+    overflow: visible;
+  }
+
+  .admin-products__table {
+    display: block;
+  }
+
+  .admin-products__table thead {
+    display: none;
+  }
+
+  .admin-products__table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .admin-products__table tr {
+    display: block;
+    border: 1px solid #dde2dd;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.2rem 0;
+  }
+
+  .admin-products__table td {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 0.5rem;
+    align-items: start;
+    border-bottom: 1px solid #f0f2f0;
+    padding: 0.45rem 0.75rem;
+    white-space: normal;
+  }
+
+  .admin-products__table td::before {
+    content: attr(data-label);
+    font-size: 0.78rem;
+    color: #5c6360;
+    font-weight: 600;
+  }
+
+  .admin-products__table td:last-child {
+    border-bottom: none;
+  }
+
+  .admin-products__name {
+    max-width: none;
+  }
+}
+
 .admin-products__table th,
 .admin-products__table td {
   padding: 0.65rem 0.85rem;

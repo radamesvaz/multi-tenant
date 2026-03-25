@@ -92,9 +92,8 @@ function formatDate(iso: string) {
   }
 }
 
-function formatDateOrDash(iso: string | null, skipIfPlaceholder = false) {
+function formatDateOrDash(iso: string | null) {
   if (!iso) return '—';
-  if (skipIfPlaceholder && iso.startsWith('0001-01-01')) return '—';
   return formatDate(iso);
 }
 
@@ -125,7 +124,7 @@ function lineSubtotal(unit: number, qty: number) {
       <table class="admin-orders__table">
         <thead>
           <tr>
-            <th scope="col">N.º</th>
+            <th scope="col">ID</th>
             <th scope="col">Fecha</th>
             <th scope="col">Cliente</th>
             <th scope="col">Teléfono</th>
@@ -145,14 +144,14 @@ function lineSubtotal(unit: number, qty: number) {
             @keydown.enter.prevent="openModal(o)"
             @keydown.space.prevent="openModal(o)"
           >
-            <td class="admin-orders__id">{{ o.id_order }}</td>
-            <td>{{ formatDate(o.created_on) }}</td>
-            <td class="admin-orders__cell-text">{{ o.user_name ?? '—' }}</td>
-            <td class="admin-orders__cell-text">{{ o.phone ?? '—' }}</td>
-            <td><span class="admin-orders__badge">{{ o.status }}</span></td>
-            <td>{{ formatMoney(o.total_price) }}</td>
-            <td>{{ o.paid ? 'Sí' : 'No' }}</td>
-            <td>{{ o.order_items.length }}</td>
+            <td class="admin-orders__id" data-label="ID">ID: {{ o.id_order }}</td>
+            <td data-label="Fecha">{{ formatDate(o.created_on) }}</td>
+            <td class="admin-orders__cell-text" data-label="Cliente">{{ o.user_name ?? '—' }}</td>
+            <td class="admin-orders__cell-text" data-label="Teléfono">{{ o.phone ?? '—' }}</td>
+            <td data-label="Estado"><span class="admin-orders__badge">{{ o.status }}</span></td>
+            <td data-label="Total">{{ formatMoney(o.total_price) }}</td>
+            <td data-label="Pagado">{{ o.paid ? 'Sí' : 'No' }}</td>
+            <td data-label="Ítems">{{ o.order_items.length }}</td>
           </tr>
         </tbody>
       </table>
@@ -260,10 +259,6 @@ function lineSubtotal(unit: number, qty: number) {
               <dt>Entrega prevista</dt>
               <dd>{{ formatDateOrDash(selectedOrder.delivery_date) }}</dd>
             </div>
-            <div class="admin-order-modal__dl-row">
-              <dt>Expira</dt>
-              <dd>{{ formatDateOrDash(selectedOrder.expires_at, true) }}</dd>
-            </div>
           </dl>
         </section>
 
@@ -273,24 +268,22 @@ function lineSubtotal(unit: number, qty: number) {
             <table class="admin-order-modal__items-table">
               <thead>
                 <tr>
-                  <th scope="col">id ítem</th>
-                  <th scope="col">id orden</th>
                   <th scope="col">Producto</th>
-                  <th scope="col">id_product</th>
-                  <th scope="col">P. unit.</th>
-                  <th scope="col">Cant.</th>
-                  <th scope="col">Subtotal</th>
+                  <th scope="col" class="admin-order-modal__items-table-num">Cantidad</th>
+                  <th scope="col" class="admin-order-modal__items-table-num">Precio unitario</th>
+                  <th scope="col" class="admin-order-modal__items-table-num">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in selectedOrder.order_items" :key="item.id_order_item">
-                  <td class="admin-order-modal__num">{{ item.id_order_item }}</td>
-                  <td class="admin-order-modal__num">{{ item.id_order }}</td>
-                  <td>{{ item.name }}</td>
-                  <td class="admin-order-modal__num">{{ item.id_product }}</td>
-                  <td>{{ formatMoney(item.unit_price) }}</td>
-                  <td class="admin-order-modal__num">{{ item.quantity }}</td>
-                  <td>{{ lineSubtotal(item.unit_price, item.quantity) }}</td>
+                  <td class="admin-order-modal__item-name">{{ item.name }}</td>
+                  <td class="admin-order-modal__items-table-num admin-order-modal__num">{{ item.quantity }}</td>
+                  <td class="admin-order-modal__items-table-num admin-order-modal__num">
+                    {{ formatMoney(item.unit_price) }}
+                  </td>
+                  <td class="admin-order-modal__items-table-num admin-order-modal__num">
+                    {{ lineSubtotal(item.unit_price, item.quantity) }}
+                  </td>
                 </tr>
               </tbody>
             </table>

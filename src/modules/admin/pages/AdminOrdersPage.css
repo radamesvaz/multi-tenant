@@ -38,6 +38,112 @@
   font-size: 0.95rem;
 }
 
+@media (max-width: 760px) {
+  .admin-orders__table-wrap {
+    border: none;
+    overflow: visible;
+  }
+
+  .admin-orders__table {
+    display: block;
+  }
+
+  .admin-orders__table thead {
+    display: none;
+  }
+
+  .admin-orders__table tbody {
+    display: grid;
+    gap: 0.95rem;
+  }
+
+  .admin-orders__table tr {
+    position: relative;
+    display: block;
+    border: 1px solid #9fbbb0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0;
+    overflow: hidden;
+    box-shadow:
+      inset 4px 0 0 0 #2d6a4f,
+      0 2px 8px rgba(26, 44, 36, 0.07),
+      0 1px 2px rgba(26, 44, 36, 0.04);
+  }
+
+  .admin-orders__table td {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 0.5rem;
+    align-items: start;
+    border-bottom: 1px solid #eef2f0;
+    padding: 0.55rem 0.85rem;
+    white-space: normal;
+  }
+
+  .admin-orders__table td:first-child {
+    padding-top: 0.65rem;
+  }
+
+  .admin-orders__table td:last-child {
+    padding-bottom: 0.65rem;
+  }
+
+  .admin-orders__table td::before {
+    content: attr(data-label);
+    font-size: 0.78rem;
+    color: #5c6360;
+    font-weight: 600;
+  }
+
+  .admin-orders__table tr td:last-of-type {
+    border-bottom: none;
+  }
+
+  .admin-orders__table td[data-label='ID'] {
+    position: absolute;
+    top: 0.42rem;
+    right: 0.65rem;
+    z-index: 1;
+    display: block;
+    width: auto;
+    max-width: 45%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    text-align: right;
+    font-size: 0.72rem;
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    color: #4a5752;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    pointer-events: none;
+  }
+
+  .admin-orders__table td[data-label='ID']::before {
+    display: none;
+  }
+
+  .admin-orders__table td[data-label='Cliente'] {
+    padding-right: 5.75rem;
+  }
+
+  .admin-orders__table td[data-label='Fecha'],
+  .admin-orders__table td[data-label='Estado'],
+  .admin-orders__table td[data-label='Ítems'] {
+    display: none;
+  }
+
+  .admin-orders__cell-text {
+    max-width: none;
+    overflow: visible;
+    text-overflow: initial;
+    white-space: normal;
+  }
+}
+
 .admin-orders__table th,
 .admin-orders__table td {
   padding: 0.65rem 0.85rem;
@@ -79,8 +185,10 @@
   cursor: pointer;
 }
 
-.admin-orders__row:hover {
-  background: #f5f7f5;
+@media (min-width: 761px) {
+  .admin-orders__row:hover {
+    background: #f5f7f5;
+  }
 }
 
 .admin-orders__row:focus-visible {
@@ -116,6 +224,30 @@
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 760px) {
+  .admin-order-modal {
+    padding: 0.6rem 0.45rem;
+  }
+
+  .admin-order-modal__panel {
+    border-radius: 10px;
+    padding: 0.9rem;
+  }
+
+  .admin-order-modal__title {
+    font-size: 1.05rem;
+  }
+
+  .admin-order-modal__dl-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .admin-order-modal__items-table {
+    font-size: 0.82rem;
+  }
 }
 
 .admin-order-modal__head {
@@ -291,12 +423,21 @@
   padding: 0.5rem 0.65rem;
   text-align: left;
   border-bottom: 1px solid #eef0ee;
+  vertical-align: top;
 }
 
 .admin-order-modal__items-table th {
   font-weight: 600;
   background: #f7f8f7;
   white-space: nowrap;
+}
+
+.admin-order-modal__items-table-num {
+  text-align: right;
+}
+
+.admin-order-modal__item-name {
+  word-break: break-word;
 }
 
 .admin-order-modal__items-table tbody tr:last-child td {

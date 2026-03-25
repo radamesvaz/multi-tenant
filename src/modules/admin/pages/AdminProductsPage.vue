@@ -44,11 +44,11 @@ function formatPrice(value: number) {
         </thead>
         <tbody>
           <tr v-for="p in productsStore.products" :key="p.id_product">
-            <td class="admin-products__name">{{ p.name }}</td>
-            <td>{{ formatPrice(p.price) }}</td>
-            <td>{{ p.stock ?? '—' }}</td>
-            <td><span class="admin-products__badge">{{ p.status }}</span></td>
-            <td>{{ p.available ? 'Sí' : 'No' }}</td>
+            <td class="admin-products__name" data-label="Nombre">{{ p.name }}</td>
+            <td data-label="Precio">{{ formatPrice(p.price) }}</td>
+            <td data-label="Inventario">{{ p.stock ?? '—' }}</td>
+            <td data-label="Estado"><span class="admin-products__badge">{{ p.status }}</span></td>
+            <td data-label="Disponible">{{ p.available ? 'Sí' : 'No' }}</td>
           </tr>
         </tbody>
       </table>
