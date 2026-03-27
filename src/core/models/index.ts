@@ -1,4 +1,4 @@
-﻿export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
+export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
 export type Product = {
   id_product: number;
@@ -94,6 +94,43 @@ export type TenantBranding = {
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
+};
+
+/** No branding data until the public GET succeeds, or if the API fails (do not invent colors on the client). */
+export const EMPTY_TENANT_BRANDING: TenantBranding = {
+  logo_url: null,
+  logo_width: null,
+  logo_height: null,
+  primary_color: null,
+  secondary_color: null,
+  accent_color: null,
+};
+
+/** `GET /t/{tenant_slug}/tenant/branding` — envelope; `branding` maps to `TenantBranding` after parsing. */
+export type TenantBrandingApiResponse = {
+  tenant_id: number;
+  tenant_slug: string;
+  branding: TenantBranding;
+};
+
+/** `PATCH /auth/tenant/branding/colors` — partial body; at least one field required by server. */
+export type UpdateTenantBrandingColorsPayload = {
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+};
+
+export type TenantBrandingColorsBlock = {
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+};
+
+/** `PATCH /auth/tenant/branding/colors` — 200 response. */
+export type UpdateTenantBrandingColorsResponse = {
+  message: string;
+  tenant_id: number;
+  colors: TenantBrandingColorsBlock;
 };
 
 export type TenantSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';

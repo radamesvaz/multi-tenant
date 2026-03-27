@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue';
+import { computed, watch, watchEffect } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
 import { BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
+import { useTenantStore } from '../../../shared/store';
 import { useCartStore } from '../store/cart';
 import './PublicLayout.css';
 
 const { tenantSlug } = useCurrentTenant();
+const tenantStore = useTenantStore();
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
-const tenantConfig = computed(() => getMockTenantConfig(tenantSlug.value));
+const tenantConfig = computed(
+  () => tenantStore.tenantConfig ?? getMockTenantConfig(tenantSlug.value),
+);
 const cartStore = useCartStore();
 const route = useRoute();
 
@@ -78,14 +82,21 @@ function updateFavicon(dataUrl: string) {
   link.href = dataUrl;
 }
 
-watchEffect(() => {
-  cartStore.initializeForTenant(tenantSlug.value);
+watch(
+  () => tenantSlug.value,
+  (slug) => {
+    cartStore.initializeForTenant(slug);
+    void tenantStore.loadBrandingForSlug(slug);
+  },
+  { immediate: true },
+);
 
+watchEffect(() => {
   const name = tenantUiConfig.value.displayName;
   const color = branding.value.primary_color ?? '#2f6d4a';
-  
+
   document.title = name;
-  
+
   const firstLetter = name.charAt(0);
   const faviconUrl = generateFavicon(firstLetter, color);
   if (faviconUrl) {

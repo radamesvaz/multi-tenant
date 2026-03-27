@@ -7,9 +7,12 @@ import type {
   OrderItem,
   Product,
   TenantBranding,
+  TenantBrandingApiResponse,
   LoginRequestBody,
   UpdateAuthOrderPayload,
   UpdateProductDetailsPayload,
+  UpdateTenantBrandingColorsPayload,
+  UpdateTenantBrandingColorsResponse,
 } from '../models';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -172,14 +175,31 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
       throw err;
     }
 
-    if (isJson) {
-      const errorData = (await response.json()) as ApiErrorResponse;
-      const error = new Error(errorData.error || 'Request failed');
-      (error as Error & { code?: string }).code = errorData.code;
-      throw error;
-    }
+    const bodyText = await response.text();
+    let message = bodyText.trim();
+    let errorCode: string | undefined;
 
-    throw new Error(`Request failed with status ${response.status}`);
+    if (message.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(message) as ApiErrorResponse;
+        if (typeof parsed.error === 'string' && parsed.error.length > 0) {
+          message = parsed.error;
+        }
+        if (typeof parsed.code === 'string' && parsed.code.length > 0) {
+          errorCode = parsed.code;
+        }
+      } catch {
+        /* use plain text */
+      }
+    }
+    if (!message) {
+      message = `Request failed with status ${response.status}`;
+    }
+    const error = new Error(message);
+    if (errorCode) {
+      (error as Error & { code?: string }).code = errorCode;
+    }
+    throw error;
   }
 
   if (!isJson) {
@@ -188,6 +208,30 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
   }
 
   return (await response.json()) as TResponse;
+}
+
+function parseTenantBrandingFields(raw: unknown): TenantBranding {
+  const b = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const str = (k: string): string | null => {
+    const v = b[k];
+    if (v == null || v === '') return null;
+    const s = String(v).trim();
+    return s.length > 0 ? s : null;
+  };
+  const num = (k: string): number | null => {
+    const v = b[k];
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  return {
+    logo_url: str('logo_url'),
+    logo_width: num('logo_width'),
+    logo_height: num('logo_height'),
+    primary_color: str('primary_color'),
+    secondary_color: str('secondary_color'),
+    accent_color: str('accent_color'),
+  };
 }
 
 export const authService = {
@@ -203,8 +247,24 @@ export const authService = {
 };
 
 export const tenantService = {
-  getPublicBranding(tenantSlug: string) {
-    return httpRequest<TenantBranding>(`/t/${tenantSlug}/branding`);
+  /**
+   * `GET /t/{tenant_slug}/tenant/branding` — public; returns normalized `TenantBranding`.
+   */
+  async getPublicBranding(tenantSlug: string): Promise<TenantBranding> {
+    const raw = await httpRequest<TenantBrandingApiResponse>(
+      `/t/${encodeURIComponent(tenantSlug)}/tenant/branding`,
+      { method: 'GET' },
+    );
+    return parseTenantBrandingFields(raw.branding);
+  },
+
+  /** `PATCH /auth/tenant/branding/colors` — Bearer JWT; tenant from token context. */
+  updateBrandingColors(token: string, payload: UpdateTenantBrandingColorsPayload) {
+    return httpRequest<UpdateTenantBrandingColorsResponse>('/auth/tenant/branding/colors', {
+      method: 'PATCH',
+      token,
+      body: payload,
+    });
   },
 };
 

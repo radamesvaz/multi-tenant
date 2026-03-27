@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
-import type { TenantBranding, TenantConfig } from '../../core/models';
+import { EMPTY_TENANT_BRANDING, type TenantBranding, type TenantConfig } from '../../core/models';
 import { getMockTenantConfig } from '../../core/mocks';
+import { tenantService } from '../../core/services';
 import { useCurrentTenant } from '../composables/useCurrentTenant';
 
 type TenantState = {
@@ -23,23 +24,34 @@ export const useTenantStore = defineStore('tenant', {
     setTenantSlug(slug: string) {
       this.tenantSlug = slug;
     },
-    async loadPublicBranding() {
-      const { tenantSlug } = useCurrentTenant();
-      const slug = tenantSlug.value;
-
+    /**
+     * Carga branding desde `GET /t/{slug}/tenant/branding`. Los mocks solo aportan metadatos
+     * (nombre comercial, etc.); colores y logo vienen siempre de la API.
+     */
+    async loadBrandingForSlug(slug: string) {
       this.tenantSlug = slug;
       this.isLoadingBranding = true;
       this.brandingError = null;
 
+      const base = getMockTenantConfig(slug);
+
       try {
-        const tenantConfig = getMockTenantConfig(slug);
-        this.tenantConfig = tenantConfig;
-        this.branding = tenantConfig.branding;
+        const branding = await tenantService.getPublicBranding(slug);
+        this.tenantConfig = { ...base, branding };
+        this.branding = branding;
       } catch (error) {
         this.brandingError = (error as Error).message;
+        this.tenantConfig = { ...base, branding: EMPTY_TENANT_BRANDING };
+        this.branding = EMPTY_TENANT_BRANDING;
       } finally {
         this.isLoadingBranding = false;
       }
+    },
+
+    /** Uses the tenant slug from the current public route (`/t/:tenantSlug/...`). */
+    async loadPublicBranding() {
+      const { tenantSlug } = useCurrentTenant();
+      await this.loadBrandingForSlug(tenantSlug.value);
     },
   },
 });
