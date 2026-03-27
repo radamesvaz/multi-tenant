@@ -1,4 +1,4 @@
-export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
+﻿export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
 export type Product = {
   id_product: number;
@@ -14,7 +14,7 @@ export type Product = {
   created_on: string;
 };
 
-/** Body para `PUT /auth/products/{id}` — solo datos generales; miniatura e imágenes van por sus endpoints dedicados. */
+/** Body for `PUT /auth/products/{id}` — only general fields; thumbnail and images are handled by their dedicated endpoints. */
 export type UpdateProductDetailsPayload = {
   name: string;
   description: string | null;
