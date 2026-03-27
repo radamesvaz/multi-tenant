@@ -1,4 +1,4 @@
-export type ProductStatus = 'active' | 'inactive' | 'archived';
+export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
 export type Product = {
   id_product: number;
@@ -12,6 +12,16 @@ export type Product = {
   image_urls: string[];
   thumbnail_url: string | null;
   created_on: string;
+};
+
+/** Body para `PUT /auth/products/{id}` — solo datos generales; miniatura e imágenes van por sus endpoints dedicados. */
+export type UpdateProductDetailsPayload = {
+  name: string;
+  description: string | null;
+  price: number;
+  stock: number | null;
+  status: ProductStatus;
+  available: boolean;
 };
 
 /** Order line as returned by `GET /auth/orders` (nested items in `OrderItems` or `order_items`). */

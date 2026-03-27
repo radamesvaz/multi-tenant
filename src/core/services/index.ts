@@ -9,12 +9,14 @@ import type {
   TenantBranding,
   LoginRequestBody,
   UpdateAuthOrderPayload,
+  UpdateProductDetailsPayload,
 } from '../models';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 type HttpOptions = {
   method?: HttpMethod;
   body?: unknown;
+  rawBody?: BodyInit;
   headers?: Record<string, string>;
   token?: string | null;
 };
@@ -137,9 +139,12 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
   const url = `${envConfig.apiBaseUrl}${path}`;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers ?? {}),
   };
+  const isRawBody = options.rawBody !== undefined;
+  if (!isRawBody && options.body !== undefined && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (options.token) {
     headers.Authorization = `Bearer ${options.token}`;
@@ -148,7 +153,11 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
   const response = await fetch(url, {
     method: options.method ?? 'GET',
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: isRawBody
+      ? options.rawBody
+      : options.body !== undefined
+        ? JSON.stringify(options.body)
+        : undefined,
   });
 
   const contentType = response.headers.get('Content-Type') ?? '';
@@ -223,6 +232,50 @@ export const productService = {
 
   getProductById(tenantSlug: string, id: number) {
     return this.getTenantProductById(tenantSlug, id);
+  },
+
+  async updateAuthProductDetails(token: string, id: number, payload: UpdateProductDetailsPayload) {
+    return httpRequest<{ message: string }>(`/auth/products/${id}`, {
+      method: 'PUT',
+      token,
+      body: payload,
+    });
+  },
+
+  async setAuthProductThumbnail(token: string, id: number, thumbnailUrl: string) {
+    return httpRequest<{ message: string }>(`/auth/products/${id}/thumbnail`, {
+      method: 'PATCH',
+      token,
+      body: { thumbnail_url: thumbnailUrl },
+    });
+  },
+
+  async uploadAuthProductThumbnail(token: string, id: number, file: File) {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    return httpRequest<{ message: string }>(`/auth/products/${id}/thumbnail`, {
+      method: 'POST',
+      token,
+      rawBody: formData,
+    });
+  },
+
+  async addAuthProductImages(token: string, id: number, files: File[]) {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('images', f));
+    return httpRequest<{ message: string }>(`/auth/products/${id}/images`, {
+      method: 'POST',
+      token,
+      rawBody: formData,
+    });
+  },
+
+  async deleteAuthProductImage(token: string, id: number, imageUrl: string) {
+    const params = new URLSearchParams({ imageUrl });
+    return httpRequest<{ message: string }>(`/auth/products/${id}/images?${params.toString()}`, {
+      method: 'DELETE',
+      token,
+    });
   },
 };
 
