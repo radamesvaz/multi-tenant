@@ -1,0 +1,60 @@
+.storefront-branding-preview {
+  margin-top: 0.5rem;
+}
+
+.storefront-branding-preview__hint {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: #5c6360;
+  line-height: 1.45;
+}
+
+/**
+ * No padding on the frame so the sticky header can span edge-to-edge like the real storefront.
+ * `.store-layout` + `.public-layout__header` negative margins in PublicLayout.css assume the
+ * stock padding (18px / 24px, or 14px inline on narrow viewports) — do not override padding here.
+ */
+.storefront-branding-preview__frame {
+  border-radius: 12px;
+  border: 1px solid #dde2dd;
+  background: #eef0ee;
+  padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  overflow: auto;
+  overflow-x: hidden;
+  max-height: min(720px, 85vh);
+}
+
+.storefront-branding-preview__layout {
+  margin: 0 !important;
+  max-width: none !important;
+  min-height: 0;
+}
+
+.storefront-branding-preview__no-nav {
+  cursor: default;
+  text-decoration: none;
+  color: inherit;
+}
+
+.storefront-branding-preview__fake-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: default;
+}
+
+.storefront-branding-preview__cart-pill {
+  cursor: default;
+  user-select: none;
+}
+
+/* Narrow column closer to mobile storefront */
+.storefront-branding-preview__frame .product-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 520px) {
+  .storefront-branding-preview__frame .product-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}

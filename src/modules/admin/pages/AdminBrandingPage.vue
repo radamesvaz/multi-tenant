@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { TenantBranding } from '../../../core/models';
+import { getTenantUiConfig } from '../../../core/config';
 import { envConfig } from '../../../core/config/env';
 import { tenantService } from '../../../core/services';
 import { isValidHexColor, normalizeHexColor } from '../../../core/utils/tenantBranding';
+import { AppSnackbar } from '../../../shared/components';
 import { useAuthStore, useTenantStore } from '../../../shared/store';
+import StorefrontBrandingPreview from '../components/StorefrontBrandingPreview.vue';
 import './AdminBrandingPage.css';
 
 const authStore = useAuthStore();
@@ -18,9 +21,14 @@ const isUploadingLogo = ref(false);
 /** Warning when the branding GET failed (empty values / UI defaults apply). */
 const loadWarning = ref<string | null>(null);
 const saveError = ref<string | null>(null);
-const saveSuccess = ref<string | null>(null);
 const logoError = ref<string | null>(null);
-const logoSuccess = ref<string | null>(null);
+const snackbarOpen = ref(false);
+const snackbarMessage = ref('');
+
+function showSnackbar(message: string) {
+  snackbarMessage.value = message;
+  snackbarOpen.value = true;
+}
 
 const loadedBranding = ref<TenantBranding | null>(null);
 
@@ -80,7 +88,6 @@ function handleLogoFileChange(e: Event) {
   const input = e.target as HTMLInputElement;
   const file = input.files?.[0];
   logoError.value = null;
-  logoSuccess.value = null;
   if (!file) {
     revokeLogoLocalPreview();
     return;
@@ -95,7 +102,6 @@ const hasPendingLogoFile = computed(() => pendingLogoFile.value !== null);
 async function uploadLogo() {
   if (!pendingLogoFile.value) return;
   logoError.value = null;
-  logoSuccess.value = null;
   const token = authStore.getToken(tenantSlug.value);
   if (!token) {
     logoError.value = 'No hay sesión activa.';
@@ -106,9 +112,8 @@ async function uploadLogo() {
     await tenantService.patchTenantBrandingLogo(token, pendingLogoFile.value);
     revokeLogoLocalPreview();
     if (logoFileInput.value) logoFileInput.value.value = '';
-    logoSuccess.value = 'Logo actualizado. Refrescando…';
     await refreshBranding();
-    logoSuccess.value = 'Logo guardado correctamente.';
+    showSnackbar('Cambios realizados');
   } catch (err) {
     logoError.value = (err as Error).message || 'No se pudo subir el logo.';
   } finally {
@@ -140,11 +145,7 @@ onMounted(() => {
   void refreshBranding();
 });
 
-const previewStyle = computed(() => ({
-  '--preview-primary': formPrimary.value || DEFAULT_PRIMARY,
-  '--preview-secondary': formSecondary.value || DEFAULT_SECONDARY,
-  '--preview-accent': formAccent.value || DEFAULT_ACCENT,
-}));
+const storeDisplayName = computed(() => getTenantUiConfig(tenantSlug.value).displayName);
 
 function formColorsValid(): boolean {
   return (
@@ -175,7 +176,6 @@ const canUploadLogo = computed(
 async function saveColors() {
   if (!canSave.value) return;
   saveError.value = null;
-  saveSuccess.value = null;
   isSaving.value = true;
   const token = authStore.getToken(tenantSlug.value);
   if (!token) {
@@ -189,9 +189,8 @@ async function saveColors() {
       secondary_color: normalizeHexColor(formSecondary.value),
       accent_color: normalizeHexColor(formAccent.value),
     });
-    saveSuccess.value = 'Colores guardados. Actualizando vista previa…';
     await refreshBranding();
-    saveSuccess.value = 'Colores guardados correctamente.';
+    showSnackbar('Cambios realizados');
   } catch (e) {
     saveError.value = (e as Error).message || 'No se pudieron guardar los colores.';
   } finally {
@@ -201,6 +200,7 @@ async function saveColors() {
 </script>
 
 <template>
+  <AppSnackbar v-model:visible="snackbarOpen" :message="snackbarMessage" />
   <div class="admin-branding">
     <header class="admin-branding__header">
       <h1>Personalización</h1>
@@ -220,16 +220,9 @@ async function saveColors() {
       <p v-if="saveError" class="admin-branding__alert admin-branding__alert--error" role="alert">
         {{ saveError }}
       </p>
-      <p v-if="saveSuccess" class="admin-branding__alert admin-branding__alert--ok" role="status">
-        {{ saveSuccess }}
-      </p>
       <p v-if="logoError" class="admin-branding__alert admin-branding__alert--error" role="alert">
         {{ logoError }}
       </p>
-      <p v-if="logoSuccess" class="admin-branding__alert admin-branding__alert--ok" role="status">
-        {{ logoSuccess }}
-      </p>
-
       <section class="admin-branding__section">
         <h2 class="admin-branding__section-title">Logo</h2>
         <p class="admin-branding__hint">
@@ -251,10 +244,6 @@ async function saveColors() {
               :src="displayLogoSrc"
               alt=""
               class="admin-branding__logo-img"
-              :style="{
-                maxWidth: loadedBranding?.logo_width && !logoLocalPreviewUrl ? `${loadedBranding.logo_width}px` : '180px',
-                maxHeight: loadedBranding?.logo_height && !logoLocalPreviewUrl ? `${loadedBranding.logo_height}px` : '40px',
-              }"
             />
           </div>
           <p v-else class="admin-branding__muted">No hay vista previa. Elegí un archivo para previsualizar.</p>
@@ -346,18 +335,13 @@ async function saveColors() {
 
       <section class="admin-branding__section">
         <h2 class="admin-branding__section-title">Vista previa</h2>
-        <div class="admin-branding__preview" :style="previewStyle">
-          <div class="admin-branding__preview-bar">
-            <span class="admin-branding__preview-dot admin-branding__preview-dot--primary" />
-            <span class="admin-branding__preview-dot admin-branding__preview-dot--secondary" />
-            <span class="admin-branding__preview-dot admin-branding__preview-dot--accent" />
-          </div>
-          <div class="admin-branding__preview-cards">
-            <div class="admin-branding__preview-card admin-branding__preview-card--primary">Primario</div>
-            <div class="admin-branding__preview-card admin-branding__preview-card--secondary">Secundario</div>
-            <div class="admin-branding__preview-card admin-branding__preview-card--accent">Acento</div>
-          </div>
-        </div>
+        <StorefrontBrandingPreview
+          :primary-color="formPrimary || DEFAULT_PRIMARY"
+          :secondary-color="formSecondary || DEFAULT_SECONDARY"
+          :accent-color="formAccent || DEFAULT_ACCENT"
+          :logo-src="displayLogoSrc"
+          :store-display-name="storeDisplayName"
+        />
       </section>
     </template>
   </div>

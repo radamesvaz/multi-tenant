@@ -89,8 +89,6 @@ export type CreateOrderPayload = {
 
 export type TenantBranding = {
   logo_url: string | null;
-  logo_width: number | null;
-  logo_height: number | null;
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
@@ -99,8 +97,6 @@ export type TenantBranding = {
 /** No branding data until the public GET succeeds, or if the API fails (do not invent colors on the client). */
 export const EMPTY_TENANT_BRANDING: TenantBranding = {
   logo_url: null,
-  logo_width: null,
-  logo_height: null,
   primary_color: null,
   secondary_color: null,
   accent_color: null,

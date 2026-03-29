@@ -40,14 +40,6 @@ const tenantThemeStyle = computed(() => ({
   '--tenant-accent': branding.value.accent_color ?? '#1f4d34',
 }));
 
-const logoStyle = computed(() => {
-  if (!hasLogo.value) return {};
-  return {
-    maxWidth: `${branding.value.logo_width ?? 180}px`,
-    maxHeight: `${branding.value.logo_height ?? 40}px`,
-  };
-});
-
 function generateFavicon(letter: string, bgColor: string): string {
   const canvas = document.createElement('canvas');
   canvas.width = 64;
@@ -114,7 +106,6 @@ watchEffect(() => {
           :src="branding.logo_url || ''"
           :alt="tenantUiConfig.displayName"
           class="store-brand__logo"
-          :style="logoStyle"
         />
         <span v-else class="store-brand__text">
           {{ tenantUiConfig.displayName }}

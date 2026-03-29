@@ -219,16 +219,8 @@ function parseTenantBrandingFields(raw: unknown): TenantBranding {
     const s = String(v).trim();
     return s.length > 0 ? s : null;
   };
-  const num = (k: string): number | null => {
-    const v = b[k];
-    if (v == null || v === '') return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  };
   return {
     logo_url: str('logo_url'),
-    logo_width: num('logo_width'),
-    logo_height: num('logo_height'),
     primary_color: str('primary_color'),
     secondary_color: str('secondary_color'),
     accent_color: str('accent_color'),
