@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { TenantBranding } from '../../../core/models';
 import { envConfig } from '../../../core/config/env';
 import { tenantService } from '../../../core/services';
@@ -14,12 +14,19 @@ const tenantSlug = computed(() => authStore.getActiveAdminTenantSlug());
 
 const isLoading = ref(true);
 const isSaving = ref(false);
+const isUploadingLogo = ref(false);
 /** Warning when the branding GET failed (empty values / UI defaults apply). */
 const loadWarning = ref<string | null>(null);
 const saveError = ref<string | null>(null);
 const saveSuccess = ref<string | null>(null);
+const logoError = ref<string | null>(null);
+const logoSuccess = ref<string | null>(null);
 
 const loadedBranding = ref<TenantBranding | null>(null);
+
+const logoFileInput = ref<HTMLInputElement | null>(null);
+const pendingLogoFile = ref<File | null>(null);
+const logoLocalPreviewUrl = ref<string | null>(null);
 
 const formPrimary = ref('');
 const formSecondary = ref('');
@@ -50,6 +57,64 @@ function resolveMediaUrl(url: string | null | undefined): string | null {
 }
 
 const logoPreviewSrc = computed(() => resolveMediaUrl(loadedBranding.value?.logo_url ?? null));
+
+const displayLogoSrc = computed(() => logoLocalPreviewUrl.value ?? logoPreviewSrc.value);
+
+function revokeLogoLocalPreview() {
+  if (logoLocalPreviewUrl.value) {
+    URL.revokeObjectURL(logoLocalPreviewUrl.value);
+    logoLocalPreviewUrl.value = null;
+  }
+  pendingLogoFile.value = null;
+}
+
+onUnmounted(() => {
+  revokeLogoLocalPreview();
+});
+
+function triggerLogoFilePicker() {
+  logoFileInput.value?.click();
+}
+
+function handleLogoFileChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  logoError.value = null;
+  logoSuccess.value = null;
+  if (!file) {
+    revokeLogoLocalPreview();
+    return;
+  }
+  revokeLogoLocalPreview();
+  pendingLogoFile.value = file;
+  logoLocalPreviewUrl.value = URL.createObjectURL(file);
+}
+
+const hasPendingLogoFile = computed(() => pendingLogoFile.value !== null);
+
+async function uploadLogo() {
+  if (!pendingLogoFile.value) return;
+  logoError.value = null;
+  logoSuccess.value = null;
+  const token = authStore.getToken(tenantSlug.value);
+  if (!token) {
+    logoError.value = 'No hay sesión activa.';
+    return;
+  }
+  isUploadingLogo.value = true;
+  try {
+    await tenantService.patchTenantBrandingLogo(token, pendingLogoFile.value);
+    revokeLogoLocalPreview();
+    if (logoFileInput.value) logoFileInput.value.value = '';
+    logoSuccess.value = 'Logo actualizado. Refrescando…';
+    await refreshBranding();
+    logoSuccess.value = 'Logo guardado correctamente.';
+  } catch (err) {
+    logoError.value = (err as Error).message || 'No se pudo subir el logo.';
+  } finally {
+    isUploadingLogo.value = false;
+  }
+}
 
 async function refreshBranding() {
   loadWarning.value = null;
@@ -90,7 +155,21 @@ function formColorsValid(): boolean {
 }
 
 const canSave = computed(
-  () => !isLoading.value && !isSaving.value && formColorsValid() && loadedBranding.value !== null,
+  () =>
+    !isLoading.value &&
+    !isSaving.value &&
+    !isUploadingLogo.value &&
+    formColorsValid() &&
+    loadedBranding.value !== null,
+);
+
+const canUploadLogo = computed(
+  () =>
+    !isLoading.value &&
+    !isSaving.value &&
+    !isUploadingLogo.value &&
+    hasPendingLogoFile.value &&
+    loadedBranding.value !== null,
 );
 
 async function saveColors() {
@@ -126,9 +205,9 @@ async function saveColors() {
     <header class="admin-branding__header">
       <h1>Personalización</h1>
       <p class="admin-branding__subtitle">
-        Colores de la tienda pública para el tenant <code>{{ tenantSlug }}</code> (
-        <code>PATCH /auth/tenant/branding/colors</code>
-        ).
+        Branding del tenant <code>{{ tenantSlug }}</code>:
+        <code>PATCH /auth/tenant/branding/logo</code> (multipart) y
+        <code>PATCH /auth/tenant/branding/colors</code> (JSON).
       </p>
     </header>
 
@@ -144,25 +223,60 @@ async function saveColors() {
       <p v-if="saveSuccess" class="admin-branding__alert admin-branding__alert--ok" role="status">
         {{ saveSuccess }}
       </p>
+      <p v-if="logoError" class="admin-branding__alert admin-branding__alert--error" role="alert">
+        {{ logoError }}
+      </p>
+      <p v-if="logoSuccess" class="admin-branding__alert admin-branding__alert--ok" role="status">
+        {{ logoSuccess }}
+      </p>
 
       <section class="admin-branding__section">
         <h2 class="admin-branding__section-title">Logo</h2>
         <p class="admin-branding__hint">
-          La subida o cambio de logo por URL aún no está disponible en la API; aquí solo se muestra el logo
-          actual si existe.
+          Subí una imagen; se envía como <code>multipart/form-data</code> con el campo <code>logo</code>.
+          Formatos habituales: PNG, SVG, JPEG.
         </p>
-        <div v-if="logoPreviewSrc" class="admin-branding__logo-block">
-          <img
-            :src="logoPreviewSrc"
-            alt=""
-            class="admin-branding__logo-img"
-            :style="{
-              maxWidth: loadedBranding?.logo_width ? `${loadedBranding.logo_width}px` : '180px',
-              maxHeight: loadedBranding?.logo_height ? `${loadedBranding.logo_height}px` : '40px',
-            }"
-          />
+        <input
+          ref="logoFileInput"
+          type="file"
+          accept="image/*"
+          class="admin-branding__file admin-branding__file--hidden"
+          tabindex="-1"
+          :disabled="isUploadingLogo || isSaving"
+          @change="handleLogoFileChange"
+        />
+        <div class="admin-branding__logo-upload">
+          <div v-if="displayLogoSrc" class="admin-branding__logo-block">
+            <img
+              :src="displayLogoSrc"
+              alt=""
+              class="admin-branding__logo-img"
+              :style="{
+                maxWidth: loadedBranding?.logo_width && !logoLocalPreviewUrl ? `${loadedBranding.logo_width}px` : '180px',
+                maxHeight: loadedBranding?.logo_height && !logoLocalPreviewUrl ? `${loadedBranding.logo_height}px` : '40px',
+              }"
+            />
+          </div>
+          <p v-else class="admin-branding__muted">No hay vista previa. Elegí un archivo para previsualizar.</p>
+          <div class="admin-branding__logo-actions">
+            <button
+              type="button"
+              class="admin-branding__btn admin-branding__btn--secondary"
+              :disabled="isUploadingLogo || isSaving"
+              @click="triggerLogoFilePicker"
+            >
+              Elegir imagen
+            </button>
+            <button
+              type="button"
+              class="admin-branding__btn"
+              :disabled="!canUploadLogo"
+              @click="uploadLogo"
+            >
+              {{ isUploadingLogo ? 'Subiendo…' : 'Guardar logo' }}
+            </button>
+          </div>
         </div>
-        <p v-else class="admin-branding__muted">No hay logo configurado.</p>
       </section>
 
       <section class="admin-branding__section">

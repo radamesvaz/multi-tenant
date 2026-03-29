@@ -133,6 +133,11 @@ export type UpdateTenantBrandingColorsResponse = {
   colors: TenantBrandingColorsBlock;
 };
 
+/** `PATCH /auth/tenant/branding/logo` — multipart field `logo`; body shape may vary by backend. */
+export type PatchTenantBrandingLogoResponse = {
+  message?: string;
+};
+
 export type TenantSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
 
 export type TenantConfig = {

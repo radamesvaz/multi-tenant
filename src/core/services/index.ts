@@ -13,6 +13,7 @@ import type {
   UpdateProductDetailsPayload,
   UpdateTenantBrandingColorsPayload,
   UpdateTenantBrandingColorsResponse,
+  PatchTenantBrandingLogoResponse,
 } from '../models';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -264,6 +265,20 @@ export const tenantService = {
       method: 'PATCH',
       token,
       body: payload,
+    });
+  },
+
+  /**
+   * `PATCH /auth/tenant/branding/logo` — `multipart/form-data`, field `logo`.
+   * Do not set `Content-Type`; the browser sets the boundary.
+   */
+  patchTenantBrandingLogo(token: string, file: File) {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return httpRequest<PatchTenantBrandingLogoResponse>('/auth/tenant/branding/logo', {
+      method: 'PATCH',
+      token,
+      rawBody: formData,
     });
   },
 };
