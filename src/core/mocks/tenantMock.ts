@@ -1,4 +1,4 @@
-import type { TenantConfig } from '../models';
+import { EMPTY_TENANT_BRANDING, type TenantConfig } from '../models';
 
 /**
  * Logo specifications for tenants.
@@ -22,14 +22,7 @@ export const mockTenantConfigs: Record<string, TenantConfig> = {
     planCode: 'basic',
     subscriptionStatus: 'active',
     isActive: true,
-    branding: {
-      logo_url: '/mock/tenants/default/logo.svg',
-      logo_width: 180,
-      logo_height: 40,
-      primary_color: '#2f6d4a',
-      secondary_color: '#adc8b4',
-      accent_color: '#1f4d34',
-    },
+    branding: { ...EMPTY_TENANT_BRANDING },
   }),
   'mi-panaderia': createTenantConfig({
     slug: 'mi-panaderia',
@@ -39,14 +32,7 @@ export const mockTenantConfigs: Record<string, TenantConfig> = {
     planCode: 'pro',
     subscriptionStatus: 'trialing',
     isActive: true,
-    branding: {
-      logo_url: null,
-      logo_width: 160,
-      logo_height: 40,
-      primary_color: '#7C3AED',
-      secondary_color: '#A78BFA',
-      accent_color: '#4C1D95',
-    },
+    branding: { ...EMPTY_TENANT_BRANDING },
   }),
 };
 
@@ -60,14 +46,7 @@ export const getMockTenantConfig = (tenantSlug: string): TenantConfig => {
       planCode: 'basic',
       subscriptionStatus: 'active',
       isActive: true,
-      branding: {
-        logo_url: null,
-        logo_width: null,
-        logo_height: null,
-        primary_color: '#D97706',
-        secondary_color: '#F59E0B',
-        accent_color: '#92400E',
-      },
+      branding: { ...EMPTY_TENANT_BRANDING },
     }
   );
 };

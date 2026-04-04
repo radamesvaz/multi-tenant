@@ -26,6 +26,7 @@ watch(
       <nav class="admin-layout__nav">
         <RouterLink :to="{ name: 'admin-orders' }">Órdenes</RouterLink>
         <RouterLink :to="{ name: 'admin-products' }">Productos</RouterLink>
+        <RouterLink :to="{ name: 'admin-branding' }">Personalización</RouterLink>
       </nav>
     </aside>
     <div v-if="isMobileNavOpen" class="admin-layout__backdrop" @click="isMobileNavOpen = false" />

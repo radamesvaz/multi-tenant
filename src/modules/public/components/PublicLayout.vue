@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue';
+import { computed, watch, watchEffect } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
 import { BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
+import { useTenantStore } from '../../../shared/store';
 import { useCartStore } from '../store/cart';
 import './PublicLayout.css';
 
 const { tenantSlug } = useCurrentTenant();
+const tenantStore = useTenantStore();
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
-const tenantConfig = computed(() => getMockTenantConfig(tenantSlug.value));
+const tenantConfig = computed(
+  () => tenantStore.tenantConfig ?? getMockTenantConfig(tenantSlug.value),
+);
 const cartStore = useCartStore();
 const route = useRoute();
 
@@ -35,14 +39,6 @@ const tenantThemeStyle = computed(() => ({
   '--tenant-secondary': branding.value.secondary_color ?? '#adc8b4',
   '--tenant-accent': branding.value.accent_color ?? '#1f4d34',
 }));
-
-const logoStyle = computed(() => {
-  if (!hasLogo.value) return {};
-  return {
-    maxWidth: `${branding.value.logo_width ?? 180}px`,
-    maxHeight: `${branding.value.logo_height ?? 40}px`,
-  };
-});
 
 function generateFavicon(letter: string, bgColor: string): string {
   const canvas = document.createElement('canvas');
@@ -78,14 +74,21 @@ function updateFavicon(dataUrl: string) {
   link.href = dataUrl;
 }
 
-watchEffect(() => {
-  cartStore.initializeForTenant(tenantSlug.value);
+watch(
+  () => tenantSlug.value,
+  (slug) => {
+    cartStore.initializeForTenant(slug);
+    void tenantStore.loadBrandingForSlug(slug);
+  },
+  { immediate: true },
+);
 
+watchEffect(() => {
   const name = tenantUiConfig.value.displayName;
   const color = branding.value.primary_color ?? '#2f6d4a';
-  
+
   document.title = name;
-  
+
   const firstLetter = name.charAt(0);
   const faviconUrl = generateFavicon(firstLetter, color);
   if (faviconUrl) {
@@ -103,7 +106,6 @@ watchEffect(() => {
           :src="branding.logo_url || ''"
           :alt="tenantUiConfig.displayName"
           class="store-brand__logo"
-          :style="logoStyle"
         />
         <span v-else class="store-brand__text">
           {{ tenantUiConfig.displayName }}
