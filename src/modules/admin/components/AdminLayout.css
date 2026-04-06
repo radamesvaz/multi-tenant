@@ -1,6 +1,8 @@
 .admin-layout {
   min-height: 100vh;
   background: #f6f8f6;
+  /** Altura aproximada del topbar sticky; el buscador de productos usa esto como `top`. */
+  --admin-topbar-sticky-height: 52px;
 }
 
 .admin-layout__sidebar {
@@ -92,6 +94,7 @@
 @media (min-width: 960px) {
   .admin-layout {
     display: flex;
+    --admin-topbar-sticky-height: 56px;
   }
 
   .admin-layout__sidebar {

@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import type { Product } from '../../../core/models';
 import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
-import { BaseButton } from '../../../shared/components';
+import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import ProductCard from '../components/ProductCard.vue';
 import ProductGallery from '../components/ProductGallery.vue';
 import './PublicHomePage.css';
+
+const SEARCH_DEBOUNCE_MS = 400;
 
 const { tenantSlug } = useCurrentTenant();
 const productsStore = usePublicProductsStore();
@@ -16,11 +18,27 @@ const cartStore = useCartStore();
 const isModalOpen = ref(false);
 const selectedProduct = ref<Product | null>(null);
 
-onMounted(() => {
-  productsStore.loadProducts(tenantSlug.value);
+const searchInput = ref('');
+const debouncedSearch = ref('');
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchInput, (v) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    debouncedSearch.value = v.trim();
+  }, SEARCH_DEBOUNCE_MS);
 });
 
+watch(
+  [tenantSlug, debouncedSearch],
+  () => {
+    void productsStore.loadFirstPage(tenantSlug.value, debouncedSearch.value);
+  },
+  { immediate: true },
+);
+
 onUnmounted(() => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   document.body.style.overflow = '';
 });
 
@@ -51,6 +69,17 @@ const decrementProduct = (product: Product) => {
   const current = getProductQuantity(product.id_product);
   cartStore.updateQuantity(product.id_product, current - 1);
 };
+
+const checkoutRoute = computed(() => `/t/${tenantSlug.value}/checkout`);
+
+const formattedCartTotal = computed(() =>
+  cartStore.totalPrice.toLocaleString('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
+);
+
+const cartItemsLabel = computed(() => (cartStore.itemCount === 1 ? 'producto' : 'productos'));
 </script>
 
 <template>
@@ -66,21 +95,58 @@ const decrementProduct = (product: Product) => {
 
     <section class="products-section">
       <h2 class="products-section__title">Nuestros Productos</h2>
-      <div v-if="productsStore.isLoading">Cargando productos...</div>
-      <div v-else-if="productsStore.error">
+      <div class="products-section__search-sticky">
+        <div class="products-section__search">
+          <label class="products-section__search-label" for="storefront-product-search">Buscador</label>
+          <input
+            id="storefront-product-search"
+            v-model="searchInput"
+            type="search"
+            class="products-section__search-input"
+            placeholder="Al menos 2 letras (prefijo del nombre)"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <BaseLink
+        v-if="cartStore.itemCount > 0"
+        :to="checkoutRoute"
+        class="cart-summary-sticky cart-summary-sticky--below-search"
+      >
+        {{ cartStore.itemCount }} {{ cartItemsLabel }} · {{ formattedCartTotal }} €
+      </BaseLink>
+      <div v-if="productsStore.isLoading && productsStore.products.length === 0">Cargando productos...</div>
+      <div v-else-if="productsStore.error && productsStore.products.length === 0" class="products-section__error">
         {{ productsStore.error }}
       </div>
-      <div v-else class="product-grid">
-        <ProductCard
-          v-for="product in productsStore.products"
-          :key="product.id_product"
-          :product="product"
-          :quantity="getProductQuantity(product.id_product)"
-          @open="openProduct"
-          @increment="incrementProduct"
-          @decrement="decrementProduct"
-        />
-      </div>
+      <template v-else>
+        <p v-if="productsStore.error" class="products-section__error products-section__error--soft" role="alert">
+          {{ productsStore.error }}
+        </p>
+        <div v-if="productsStore.products.length === 0" class="products-section__empty">No hay productos para mostrar.</div>
+        <div v-else class="product-grid">
+          <ProductCard
+            v-for="product in productsStore.products"
+            :key="product.id_product"
+            :product="product"
+            :quantity="getProductQuantity(product.id_product)"
+            @open="openProduct"
+            @increment="incrementProduct"
+            @decrement="decrementProduct"
+          />
+        </div>
+        <div v-if="productsStore.hasMore" class="products-section__more">
+          <BaseButton
+            type="button"
+            class="products-section__load-more"
+            :disabled="productsStore.isLoadingMore"
+            @click="productsStore.loadMore(tenantSlug)"
+          >
+            {{ productsStore.isLoadingMore ? 'Cargando…' : 'Cargar más' }}
+          </BaseButton>
+        </div>
+      </template>
     </section>
 
     <section v-if="isModalOpen && selectedProduct" class="product-modal">

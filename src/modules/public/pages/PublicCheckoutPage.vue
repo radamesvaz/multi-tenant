@@ -124,7 +124,7 @@ const validateCartWithCatalog = async () => {
   isValidatingCatalog.value = true;
 
   try {
-    const catalog = await productService.getPublicProducts(tenantSlug.value);
+    const catalog = await productService.fetchAllTenantProducts(tenantSlug.value);
     const map = new Map(catalog.map((product) => [product.id_product, product]));
     const issues: ValidationIssue[] = [];
 
