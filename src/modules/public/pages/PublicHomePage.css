@@ -2,6 +2,11 @@
   padding-top: 8px;
 }
 
+.products-section {
+  /** Altura del bloque sticky del buscador (header 56px + esto = donde empieza el pill). */
+  --storefront-search-sticky-height: 96px;
+}
+
 .instructions-card {
   max-width: 760px;
   margin: 24px auto;
@@ -40,6 +45,91 @@
   font-weight: 700;
   margin: 26px 0 18px;
   color: color-mix(in srgb, var(--tenant-accent) 72%, #102118);
+}
+
+.products-section__search-sticky {
+  position: sticky;
+  top: 56px;
+  z-index: 88;
+  margin: 0 0 16px;
+  padding: 10px 0 12px;
+  background: var(--tenant-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--tenant-line) 85%, transparent);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.products-section__search {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.products-section__search-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--tenant-text);
+}
+
+.products-section__search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--tenant-line);
+  font-size: var(--font-sm);
+  background: #fff;
+  color: var(--tenant-text);
+}
+
+.products-section__search-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--tenant-primary) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.products-section__error {
+  text-align: center;
+  color: #b00020;
+  font-size: var(--font-sm);
+  margin: 12px 0;
+}
+
+.products-section__error--soft {
+  color: color-mix(in srgb, var(--tenant-accent) 45%, #5c2a2a);
+}
+
+.products-section__empty {
+  text-align: center;
+  color: var(--tenant-muted);
+  font-size: var(--font-sm);
+  padding: 1rem 0;
+}
+
+.products-section__more {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0 2rem;
+}
+
+.products-section__load-more {
+  border: none;
+  border-radius: 25px;
+  padding: 0.55rem 1.4rem;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
+    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
+  );
+  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+}
+
+.products-section__load-more:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .product-grid {
@@ -181,6 +271,10 @@
 }
 
 @media (max-width: 640px) {
+  .products-section {
+    --storefront-search-sticky-height: 92px;
+  }
+
   .products-section__title {
     margin: 18px 0 12px;
   }

@@ -6,6 +6,8 @@ import type {
   Order,
   OrderItem,
   Product,
+  ProductListResponse,
+  ProductStatus,
   TenantBranding,
   TenantBrandingApiResponse,
   LoginRequestBody,
@@ -23,6 +25,7 @@ type HttpOptions = {
   rawBody?: BodyInit;
   headers?: Record<string, string>;
   token?: string | null;
+  signal?: AbortSignal;
 };
 
 function tenantProductsBasePath(tenantSlug: string): string {
@@ -157,6 +160,7 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
   const response = await fetch(url, {
     method: options.method ?? 'GET',
     headers,
+    signal: options.signal,
     body: isRawBody
       ? options.rawBody
       : options.body !== undefined
@@ -200,6 +204,7 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
     if (errorCode) {
       (error as Error & { code?: string }).code = errorCode;
     }
+    (error as Error & { status?: number }).status = response.status;
     throw error;
   }
 
@@ -225,6 +230,105 @@ function parseTenantBrandingFields(raw: unknown): TenantBranding {
     secondary_color: str('secondary_color'),
     accent_color: str('accent_color'),
   };
+}
+
+const PRODUCT_STATUSES: ProductStatus[] = ['active', 'inactive', 'archived', 'deleted'];
+
+function normalizeProductStatus(raw: unknown): ProductStatus {
+  const s = String(raw ?? '').trim();
+  if (PRODUCT_STATUSES.includes(s as ProductStatus)) {
+    return s as ProductStatus;
+  }
+  return 'active';
+}
+
+/** Normalizes one product from list/detail JSON (tolerates OpenAPI vs legacy shapes). */
+export function parseApiProduct(raw: unknown): Product {
+  const r = raw as Record<string, unknown>;
+  const descRaw = r.description;
+  const desc =
+    descRaw == null || descRaw === ''
+      ? null
+      : String(descRaw).trim() === ''
+        ? null
+        : String(descRaw);
+
+  const thumbRaw = r.thumbnail_url;
+  const thumbnail_url =
+    thumbRaw == null || thumbRaw === '' ? null : String(thumbRaw).trim() || null;
+
+  const imgs = r.image_urls;
+  const image_urls = Array.isArray(imgs) ? imgs.map((x) => String(x)) : [];
+
+  const stockRaw = r.stock;
+  const stock =
+    stockRaw == null || stockRaw === ''
+      ? null
+      : Number.isFinite(Number(stockRaw))
+        ? Number(stockRaw)
+        : null;
+
+  return {
+    id_product: Number(r.id_product),
+    tenant_id: Number(r.tenant_id),
+    name: typeof r.name === 'string' ? r.name : '',
+    description: desc,
+    price: Number(r.price),
+    available: Boolean(r.available),
+    stock,
+    status: normalizeProductStatus(r.status),
+    image_urls,
+    thumbnail_url,
+    created_on: r.created_on == null ? '' : String(r.created_on),
+  };
+}
+
+function parseProductListResponse(raw: unknown): ProductListResponse {
+  if (Array.isArray(raw)) {
+    return { items: raw.map(parseApiProduct), next_cursor: null };
+  }
+  if (!raw || typeof raw !== 'object') {
+    return { items: [], next_cursor: null };
+  }
+  const o = raw as Record<string, unknown>;
+  const rawItems = o.items;
+  const items = Array.isArray(rawItems) ? rawItems.map(parseApiProduct) : [];
+  const nc = o.next_cursor;
+  const next_cursor = nc == null || nc === '' ? null : String(nc);
+  return { items, next_cursor };
+}
+
+const DEFAULT_PRODUCT_PAGE_SIZE = 20;
+const MAX_PRODUCT_PAGE_SIZE = 100;
+
+export type TenantProductListOptions = {
+  token?: string | null;
+  limit?: number;
+  cursor?: string | null;
+  /** Prefix search; only sent if trim length is at least 2 (API returns 400 otherwise). */
+  q?: string;
+  signal?: AbortSignal;
+};
+
+function buildTenantProductsQuery(params: {
+  limit?: number;
+  cursor?: string | null;
+  q?: string;
+}): string {
+  const search = new URLSearchParams();
+  const limit = params.limit ?? DEFAULT_PRODUCT_PAGE_SIZE;
+  if (limit < 1 || limit > MAX_PRODUCT_PAGE_SIZE) {
+    throw new Error('limit must be between 1 and 100');
+  }
+  search.set('limit', String(limit));
+  if (params.cursor != null && params.cursor !== '') {
+    search.set('cursor', params.cursor);
+  }
+  const qt = params.q?.trim() ?? '';
+  if (qt.length >= 2) {
+    search.set('q', qt);
+  }
+  return `?${search.toString()}`;
 }
 
 export const authService = {
@@ -277,28 +381,69 @@ export const tenantService = {
 
 export const productService = {
   /**
-   * `GET /t/{tenant_slug}/products` — tenant catalog (optional JWT for admin routes).
+   * `GET /t/{tenant_slug}/products` — paginated envelope (`items`, `next_cursor`). Optional JWT for admin.
    */
-  listTenantProducts(tenantSlug: string, options: { token?: string | null } = {}) {
-    return httpRequest<Product[]>(tenantProductsBasePath(tenantSlug), {
+  async listTenantProducts(
+    tenantSlug: string,
+    options: TenantProductListOptions = {},
+  ): Promise<ProductListResponse> {
+    const path =
+      tenantProductsBasePath(tenantSlug) +
+      buildTenantProductsQuery({
+        limit: options.limit,
+        cursor: options.cursor,
+        q: options.q,
+      });
+    const raw = await httpRequest<unknown>(path, {
       method: 'GET',
       token: options.token ?? null,
+      signal: options.signal,
     });
+    return parseProductListResponse(raw);
   },
 
-  getPublicProducts(tenantSlug: string) {
-    return this.listTenantProducts(tenantSlug);
+  /**
+   * Fetches every page (cursor chain) with maximum page size. Use for cart validation and similar full-catalog needs.
+   */
+  async fetchAllTenantProducts(
+    tenantSlug: string,
+    options: { token?: string | null; signal?: AbortSignal } = {},
+  ): Promise<Product[]> {
+    const out: Product[] = [];
+    let cursor: string | undefined;
+    const limit = MAX_PRODUCT_PAGE_SIZE;
+    for (;;) {
+      const { items, next_cursor } = await this.listTenantProducts(tenantSlug, {
+        ...options,
+        limit,
+        cursor: cursor ?? null,
+      });
+      out.push(...items);
+      if (next_cursor == null) break;
+      cursor = next_cursor;
+    }
+    return out;
   },
 
-  getTenantProductById(tenantSlug: string, id: number, options: { token?: string | null } = {}) {
-    return httpRequest<Product>(`${tenantProductsBasePath(tenantSlug)}/${id}`, {
+  getPublicProducts(tenantSlug: string, options?: { signal?: AbortSignal }) {
+    return this.fetchAllTenantProducts(tenantSlug, options);
+  },
+
+  async getTenantProductById(
+    tenantSlug: string,
+    id: number,
+    options: { token?: string | null; signal?: AbortSignal } = {},
+  ) {
+    const raw = await httpRequest<unknown>(`${tenantProductsBasePath(tenantSlug)}/${id}`, {
       method: 'GET',
       token: options.token ?? null,
+      signal: options.signal,
     });
+    return parseApiProduct(raw);
   },
 
-  getProductById(tenantSlug: string, id: number) {
-    return this.getTenantProductById(tenantSlug, id);
+  getProductById(tenantSlug: string, id: number, options?: { signal?: AbortSignal }) {
+    return this.getTenantProductById(tenantSlug, id, options);
   },
 
   async updateAuthProductDetails(token: string, id: number, payload: UpdateProductDetailsPayload) {

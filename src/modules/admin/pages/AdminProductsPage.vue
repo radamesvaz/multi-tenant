@@ -42,6 +42,26 @@ const selectedGalleryFiles = ref<File[]>([]);
 
 const thumbnailUploadHint = productThumbnailUploadHintEs();
 
+const SEARCH_DEBOUNCE_MS = 400;
+const searchInput = ref('');
+const debouncedSearch = ref('');
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchInput, (v) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    debouncedSearch.value = v.trim();
+  }, SEARCH_DEBOUNCE_MS);
+});
+
+watch(
+  debouncedSearch,
+  () => {
+    void productsStore.loadFirstPage(debouncedSearch.value);
+  },
+  { immediate: true },
+);
+
 function resolveMediaUrl(url: string | null | undefined): string | null {
   if (url == null) return null;
   const u = String(url).trim();
@@ -71,7 +91,6 @@ function triggerThumbnailFilePicker() {
 
 let removeKeyListener: (() => void) | undefined;
 onMounted(() => {
-  productsStore.loadProducts();
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') closeModal();
   };
@@ -80,6 +99,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   removeKeyListener?.();
   revokeThumbnailLocalPreview();
 });
@@ -236,20 +256,48 @@ async function removeGalleryImage(url: string) {
     <header class="admin-products__header">
       <h1>Productos</h1>
       <p class="admin-products__subtitle">
-        Catálogo del tenant activo (<code>GET /t/&lt;slug&gt;/products</code> con JWT). Hacé clic en una fila para
-        editar.
+        Catálogo paginado (<code>GET /t/&lt;slug&gt;/products</code> con JWT, <code>limit</code> /
+        <code>cursor</code> / <code>q</code>). Hacé clic en una fila para editar.
       </p>
     </header>
 
-    <div v-if="productsStore.isLoading" class="admin-products__state">Cargando…</div>
-    <div v-else-if="productsStore.error" class="admin-products__state admin-products__state--error" role="alert">
-      {{ productsStore.error }}
-    </div>
-    <div v-else-if="productsStore.products.length === 0" class="admin-products__state">
-      No hay productos para este tenant.
+    <div class="admin-products__search-sticky">
+      <div class="admin-products__search">
+        <label class="admin-products__search-label" for="admin-product-search">Buscador</label>
+        <input
+          id="admin-product-search"
+          v-model="searchInput"
+          type="search"
+          class="admin-products__search-input"
+          placeholder="Al menos 2 letras (prefijo del nombre)"
+          autocomplete="off"
+        />
+      </div>
     </div>
 
-    <div v-else class="admin-products__table-wrap">
+    <div v-if="productsStore.isLoading && productsStore.products.length === 0" class="admin-products__state">
+      Cargando…
+    </div>
+    <div
+      v-else-if="productsStore.error && productsStore.products.length === 0"
+      class="admin-products__state admin-products__state--error"
+      role="alert"
+    >
+      {{ productsStore.error }}
+    </div>
+    <template v-else>
+      <p
+        v-if="productsStore.error"
+        class="admin-products__state admin-products__state--error admin-products__state--soft"
+        role="alert"
+      >
+        {{ productsStore.error }}
+      </p>
+      <div v-if="productsStore.products.length === 0" class="admin-products__state">
+        No hay productos para este tenant.
+      </div>
+
+      <div v-else class="admin-products__table-wrap">
       <table class="admin-products__table">
         <thead>
           <tr>
@@ -279,6 +327,18 @@ async function removeGalleryImage(url: string) {
         </tbody>
       </table>
     </div>
+
+      <div v-if="productsStore.hasMore" class="admin-products__more">
+        <button
+          type="button"
+          class="admin-products__load-more"
+          :disabled="productsStore.isLoadingMore"
+          @click="productsStore.loadMore()"
+        >
+          {{ productsStore.isLoadingMore ? 'Cargando…' : 'Cargar más' }}
+        </button>
+      </div>
+    </template>
 
     <div
       v-if="selectedProduct"

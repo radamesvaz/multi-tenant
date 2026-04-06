@@ -1,4 +1,4 @@
-export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
+﻿export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
 
 export type Product = {
   id_product: number;
@@ -12,6 +12,12 @@ export type Product = {
   image_urls: string[];
   thumbnail_url: string | null;
   created_on: string;
+};
+
+/** `GET /t/{tenant_slug}/products` — OpenAPI `ProductListResponse`. */
+export type ProductListResponse = {
+  items: Product[];
+  next_cursor: string | null;
 };
 
 /** Body for `PUT /auth/products/{id}` — only general fields; thumbnail and images are handled by their dedicated endpoints. */
