@@ -55,7 +55,7 @@
   font-size: var(--font-md);
   line-height: var(--leading-tight);
   font-weight: 700;
-  color: color-mix(in srgb, var(--tenant-accent) 70%, #102118);
+  color: var(--tenant-text);
 }
 
 .product-card__description {
@@ -69,7 +69,7 @@
   margin: 0;
   font-size: var(--font-lg);
   font-weight: 700;
-  color: color-mix(in srgb, var(--tenant-primary) 82%, #183828);
+  color: var(--tenant-text);
 }
 
 .product-card__actions {
@@ -83,12 +83,8 @@
 .qty-btn {
   border: none;
   border-radius: 25px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
-  );
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
   min-width: 40px;
   height: 32px;
   padding: 0.5rem 1rem;
@@ -121,7 +117,7 @@
   text-align: center;
   font-weight: 700;
   font-size: var(--font-base);
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  color: var(--tenant-text);
 }
 
 @media (max-width: 640px) {

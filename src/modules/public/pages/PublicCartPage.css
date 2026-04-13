@@ -7,7 +7,7 @@
 .cart-page__header h1 {
   margin: 0;
   font-size: var(--font-2xl);
-  color: color-mix(in srgb, var(--tenant-accent) 78%, #102118);
+  color: var(--tenant-text);
 }
 
 .cart-page__header p {
@@ -21,7 +21,7 @@
   border: 1px dashed var(--tenant-line);
   border-radius: 14px;
   padding: 18px;
-  background: color-mix(in srgb, var(--tenant-secondary) 10%, white);
+  background: #f9fafb;
 }
 
 .cart-page__empty p {
@@ -66,6 +66,7 @@
   margin: 0;
   font-size: var(--font-md);
   line-height: 1.2;
+  color: var(--tenant-text);
 }
 
 .cart-item__price {
@@ -78,6 +79,7 @@
   margin: 4px 0 0;
   font-size: var(--font-sm);
   font-weight: 700;
+  color: var(--tenant-text);
 }
 
 .cart-item__actions {
@@ -93,12 +95,8 @@
   min-width: 34px;
   height: 30px;
   padding: 0.35rem 0.65rem;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
-  );
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
   font-size: var(--font-xs);
   font-weight: 700;
   cursor: pointer;
@@ -130,16 +128,16 @@
 
 .cart-page__footer strong {
   font-size: var(--font-xl);
-  color: color-mix(in srgb, var(--tenant-primary) 80%, #102118);
+  color: var(--tenant-text);
 }
 
 .cart-page__checkout {
   text-decoration: none;
   border-radius: 999px;
   padding: 10px 16px;
-  border: 1px solid color-mix(in srgb, var(--tenant-accent) 22%, #fff);
-  background: color-mix(in srgb, var(--tenant-secondary) 40%, white);
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  border: 1px solid var(--tenant-line);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
   font-weight: 700;
 }
 

@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .product-gallery__main {
@@ -102,8 +105,16 @@
 
 .product-gallery__thumbnails {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  align-content: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 4px 10px 2px;
+  margin: 0;
+  overflow-x: hidden;
 }
 
 .product-gallery__thumbnails button {
@@ -133,4 +144,12 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+@media (max-width: 640px) {
+  .product-gallery__thumbnails button {
+    width: 52px;
+    height: 52px;
+    border-radius: 9px;
+  }
 }

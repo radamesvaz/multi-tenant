@@ -3,7 +3,7 @@ import { computed, onUnmounted, ref, watch } from 'vue';
 import type { Product } from '../../../core/models';
 import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
-import { BaseButton, BaseLink } from '../../../shared/components';
+import { BaseButton, BaseLink, ProductSearchBar } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import ProductCard from '../components/ProductCard.vue';
 import ProductGallery from '../components/ProductGallery.vue';
@@ -96,17 +96,12 @@ const cartItemsLabel = computed(() => (cartStore.itemCount === 1 ? 'producto' : 
     <section class="products-section">
       <h2 class="products-section__title">Nuestros Productos</h2>
       <div class="products-section__search-sticky">
-        <div class="products-section__search">
-          <label class="products-section__search-label" for="storefront-product-search">Buscador</label>
-          <input
-            id="storefront-product-search"
-            v-model="searchInput"
-            type="search"
-            class="products-section__search-input"
-            placeholder="Al menos 2 letras (prefijo del nombre)"
-            autocomplete="off"
-          />
-        </div>
+        <ProductSearchBar
+          id="storefront-product-search"
+          v-model="searchInput"
+          placeholder="Al menos 2 letras (prefijo del nombre)"
+          variant="storefront"
+        />
       </div>
 
       <BaseLink
