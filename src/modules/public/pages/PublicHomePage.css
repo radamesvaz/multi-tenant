@@ -3,8 +3,8 @@
 }
 
 .products-section {
-  /** Altura del bloque sticky del buscador (header 56px + esto = donde empieza el pill). */
-  --storefront-search-sticky-height: 96px;
+  /** Altura del bloque sticky del buscador (header `--public-header-height` + esto = donde empieza el pill). */
+  --storefront-search-sticky-height: 80px;
 }
 
 .instructions-card {
@@ -12,12 +12,7 @@
   margin: 24px auto;
   border-radius: 16px;
   padding: 24px 28px;
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--tenant-secondary) 42%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 20%, white) 58%,
-    color-mix(in srgb, var(--tenant-accent) 16%, white) 100%
-  );
+  background: #fff;
   border: 1px solid var(--tenant-line);
   text-align: center;
 }
@@ -27,7 +22,7 @@
   font-size: clamp(var(--font-xl), 5vw, var(--font-2xl));
   line-height: var(--leading-tight);
   font-weight: 700;
-  color: color-mix(in srgb, var(--tenant-accent) 72%, #102118);
+  color: var(--tenant-text);
 }
 
 .instructions-card ol {
@@ -44,48 +39,18 @@
   line-height: var(--leading-tight);
   font-weight: 700;
   margin: 26px 0 18px;
-  color: color-mix(in srgb, var(--tenant-accent) 72%, #102118);
+  color: var(--tenant-text);
 }
 
 .products-section__search-sticky {
   position: sticky;
-  top: 56px;
+  top: var(--public-header-height, 60px);
   z-index: 88;
   margin: 0 0 16px;
   padding: 10px 0 12px;
-  background: var(--tenant-bg);
+  background: #fff;
   border-bottom: 1px solid color-mix(in srgb, var(--tenant-line) 85%, transparent);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-}
-
-.products-section__search {
-  max-width: 420px;
-  margin: 0 auto;
-  text-align: left;
-}
-
-.products-section__search-label {
-  display: block;
-  font-size: var(--font-sm);
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--tenant-text);
-}
-
-.products-section__search-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--tenant-line);
-  font-size: var(--font-sm);
-  background: #fff;
-  color: var(--tenant-text);
-}
-
-.products-section__search-input:focus {
-  outline: 2px solid color-mix(in srgb, var(--tenant-primary) 55%, transparent);
-  outline-offset: 1px;
 }
 
 .products-section__error {
@@ -96,7 +61,7 @@
 }
 
 .products-section__error--soft {
-  color: color-mix(in srgb, var(--tenant-accent) 45%, #5c2a2a);
+  color: #8a3a3a;
 }
 
 .products-section__empty {
@@ -119,12 +84,8 @@
   font-size: var(--font-sm);
   font-weight: 600;
   cursor: pointer;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
-  );
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
 }
 
 .products-section__load-more:disabled {
@@ -160,12 +121,9 @@
   width: 100%;
   max-width: 300px;
   max-height: calc(100vh - 64px);
+  overflow-x: hidden;
   overflow-y: auto;
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--tenant-secondary) 28%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 12%, white) 100%
-  );
+  background: #fff;
   border-radius: 18px;
   padding: 16px 14px 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
@@ -202,7 +160,7 @@
   font-size: var(--font-lg);
   font-weight: 600;
   line-height: var(--leading-tight);
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #0a1a10);
+  color: var(--tenant-text);
   text-align: left;
 }
 
@@ -210,7 +168,7 @@
   margin: 12px 0 0;
   font-size: var(--font-xl);
   font-weight: 700;
-  color: color-mix(in srgb, var(--tenant-accent) 78%, #0a1a10);
+  color: var(--tenant-text);
 }
 
 .product-modal__description {
@@ -231,12 +189,8 @@
 .qty-btn {
   border: none;
   border-radius: 25px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
-  );
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
   min-width: 40px;
   height: 32px;
   padding: 0.5rem 1rem;
@@ -260,7 +214,7 @@
   text-align: center;
   font-weight: 700;
   font-size: var(--font-base);
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  color: var(--tenant-text);
 }
 
 @media (max-width: 768px) {
@@ -272,7 +226,7 @@
 
 @media (max-width: 640px) {
   .products-section {
-    --storefront-search-sticky-height: 92px;
+    --storefront-search-sticky-height: 78px;
   }
 
   .products-section__title {

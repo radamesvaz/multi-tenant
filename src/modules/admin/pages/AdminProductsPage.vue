@@ -7,6 +7,7 @@ import type {
 } from '../../../core/models';
 import { envConfig } from '../../../core/config/env';
 import { productThumbnailUploadHintEs } from '../../../core/constants/productThumbnailSpec';
+import { ProductSearchBar } from '../../../shared/components';
 import { useAdminProductsStore } from '../store';
 import './AdminProductsPage.css';
 
@@ -262,17 +263,12 @@ async function removeGalleryImage(url: string) {
     </header>
 
     <div class="admin-products__search-sticky">
-      <div class="admin-products__search">
-        <label class="admin-products__search-label" for="admin-product-search">Buscador</label>
-        <input
-          id="admin-product-search"
-          v-model="searchInput"
-          type="search"
-          class="admin-products__search-input"
-          placeholder="Al menos 2 letras (prefijo del nombre)"
-          autocomplete="off"
-        />
-      </div>
+      <ProductSearchBar
+        id="admin-product-search"
+        v-model="searchInput"
+        placeholder="Al menos 2 letras (prefijo del nombre)"
+        variant="admin"
+      />
     </div>
 
     <div v-if="productsStore.isLoading && productsStore.products.length === 0" class="admin-products__state">

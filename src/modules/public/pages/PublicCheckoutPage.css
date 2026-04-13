@@ -7,7 +7,7 @@
 .checkout-page__header h1 {
   margin: 0;
   font-size: var(--font-2xl);
-  color: color-mix(in srgb, var(--tenant-accent) 78%, #102118);
+  color: var(--tenant-text);
 }
 
 .checkout-page__header p {
@@ -17,7 +17,9 @@
 }
 
 .checkout-page__home-link {
-  color: color-mix(in srgb, var(--tenant-accent) 78%, #102118);
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--tenant-text);
   font-weight: 700;
   text-decoration: none;
 }
@@ -28,16 +30,12 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--tenant-accent) 24%, #fff);
+  border: 1px solid var(--tenant-line);
   padding: 8px 14px;
   margin-bottom: 10px;
   text-decoration: none;
-  color: color-mix(in srgb, var(--tenant-accent) 88%, #102118);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 75%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 45%, white) 100%
-  );
+  color: var(--tenant-text);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
   font-size: var(--font-sm);
   font-weight: 700;
   box-shadow: 0 6px 14px color-mix(in srgb, var(--tenant-primary) 18%, transparent);
@@ -85,7 +83,7 @@
   padding: 9px 10px;
   font: inherit;
   color: inherit;
-  background: color-mix(in srgb, white 92%, var(--tenant-secondary) 8%);
+  background: #fafafa;
 }
 
 .form-field small {
@@ -95,14 +93,14 @@
 
 .checkout-location-button {
   width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--tenant-accent) 20%, #fff);
+  border: 1px solid var(--tenant-line);
   border-radius: 999px;
   padding: 7px 12px;
   font: inherit;
   font-size: var(--font-xs);
   font-weight: 700;
-  color: color-mix(in srgb, var(--tenant-accent) 88%, #102118);
-  background: color-mix(in srgb, white 85%, var(--tenant-secondary) 15%);
+  color: var(--tenant-text);
+  background: #f3f4f6;
   cursor: pointer;
 }
 
@@ -132,12 +130,8 @@
   font-size: var(--font-sm);
   font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--tenant-secondary) 70%, white) 0%,
-    color-mix(in srgb, var(--tenant-primary) 40%, white) 100%
-  );
-  color: color-mix(in srgb, var(--tenant-accent) 85%, #102118);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
 }
 
 .checkout-form__actions button:disabled {
@@ -146,12 +140,13 @@
 }
 
 .checkout-form__actions button.secondary {
-  background: color-mix(in srgb, white 88%, var(--tenant-secondary) 12%);
+  background: #f3f4f6;
 }
 
 .checkout-summary h2 {
   margin: 0 0 8px;
   font-size: var(--font-lg);
+  color: var(--tenant-text);
 }
 
 .checkout-summary ul {
@@ -182,20 +177,21 @@
 
 .checkout-summary__total strong {
   font-size: var(--font-lg);
-  color: color-mix(in srgb, var(--tenant-primary) 80%, #102118);
+  color: var(--tenant-text);
 }
 
 .checkout-issues {
   margin-top: 12px;
-  border: 1px solid color-mix(in srgb, #ff9b9b 45%, var(--tenant-line));
+  border: 1px solid #f5c2c7;
   border-radius: 12px;
-  background: color-mix(in srgb, #ff9b9b 16%, white);
+  background: #fef2f2;
   padding: 12px;
 }
 
 .checkout-issues h3 {
   margin: 0 0 8px;
   font-size: var(--font-md);
+  color: var(--tenant-text);
 }
 
 .checkout-issues ul {
@@ -244,16 +240,13 @@
   font-size: var(--font-sm);
   font-weight: 700;
   cursor: pointer;
-  background: color-mix(in srgb, var(--tenant-secondary) 45%, white);
+  background: color-mix(in srgb, var(--tenant-primary) 44%, white);
+  color: var(--tenant-text);
 }
 
 .checkout-whatsapp-helper__actions button.secondary {
-  background: color-mix(in srgb, white 90%, var(--tenant-secondary) 10%);
-}
-
-.checkout-page__home-link {
-  display: inline-block;
-  margin-top: 14px;
+  background: #f3f4f6;
+  color: var(--tenant-text);
 }
 
 @media (max-width: 900px) {

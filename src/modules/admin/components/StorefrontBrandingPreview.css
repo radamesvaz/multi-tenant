@@ -9,6 +9,59 @@
   line-height: 1.45;
 }
 
+.storefront-branding-preview__controls {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid #d5dbd6;
+  background: linear-gradient(180deg, #f8faf8 0%, #f1f4f1 100%);
+}
+
+.storefront-branding-preview__controls-title {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5c6360;
+  margin: 0 0 0.45rem;
+}
+
+.storefront-branding-preview__preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.storefront-branding-preview__preset-chip {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2a332e;
+  background: #fff;
+  border: 1px solid #c5cdc7;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.storefront-branding-preview__preset-chip:hover {
+  border-color: #2f6d4a;
+  color: #1f3328;
+}
+
+.storefront-branding-preview__preset-chip--active {
+  background: #2f6d4a;
+  border-color: #2f6d4a;
+  color: #fff;
+}
+
+.storefront-branding-preview__preset-detail {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #5c6360;
+}
+
 /**
  * No padding on the frame so the sticky header can span edge-to-edge like the real storefront.
  * `.store-layout` + `.public-layout__header` negative margins in PublicLayout.css assume the
@@ -57,4 +110,33 @@
   .storefront-branding-preview__frame .product-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
+}
+
+/**
+ * Simulación de reparto de color (solo dentro del marco de vista previa).
+ * Variables --pv-* las inyecta StorefrontBrandingPreview.vue.
+ */
+.storefront-branding-preview__frame .store-layout.storefront-branding-preview__layout {
+  --tenant-line: color-mix(in srgb, var(--tenant-accent) var(--pv-border-accent-mix, 0%), #e5e7eb);
+  background: color-mix(in srgb, var(--tenant-secondary) var(--pv-canvas-secondary-mix, 0%), #fff) !important;
+}
+
+.storefront-branding-preview__frame .store-layout.storefront-branding-preview__layout .public-layout__header {
+  background: color-mix(in srgb, var(--tenant-primary) var(--pv-header-mix, 0%), #fff);
+  border-bottom-color: var(--tenant-line);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--tenant-primary) 10%, transparent);
+}
+
+.storefront-branding-preview__frame .store-layout.storefront-branding-preview__layout .store-nav a {
+  background: color-mix(in srgb, var(--tenant-secondary) var(--pv-pill-secondary-mix, 0%), #f3f4f6);
+  border-color: var(--tenant-line);
+}
+
+.storefront-branding-preview__frame .store-layout.storefront-branding-preview__layout .cart-summary-sticky {
+  border-color: var(--tenant-line);
+  background: #fff;
+}
+
+.storefront-branding-preview__frame .store-layout.storefront-branding-preview__layout .qty-btn {
+  background: color-mix(in srgb, var(--tenant-primary) var(--pv-btn-primary-mix, 44%), #fff);
 }

@@ -9,34 +9,6 @@
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
-.admin-products__search {
-  max-width: 28rem;
-}
-
-.admin-products__search-label {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #3d4540;
-}
-
-.admin-products__search-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid #cdd3ce;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  background: #fff;
-  color: #1a211c;
-}
-
-.admin-products__search-input:focus {
-  outline: 2px solid #2e7d5a;
-  outline-offset: 1px;
-}
-
 .admin-products__more {
   margin-top: 1rem;
 }
