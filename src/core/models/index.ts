@@ -155,6 +155,7 @@ export type TenantConfig = {
 
 export type AuthTokenResponse = {
   token: string;
+  tenant_name?: string;
 };
 
 /** POST /t/{tenant_slug}/auth/login — tenant comes from the path; body is only credentials. */
@@ -163,8 +164,28 @@ export type LoginRequestBody = {
   password: string;
 };
 
+/** POST /t/{tenant_slug}/auth/password/forgot */
+export type ForgotPasswordRequestBody = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+};
+
+/** POST /t/{tenant_slug}/auth/password/reset */
+export type ResetPasswordRequestBody = {
+  token: string;
+  new_password: string;
+};
+
+export type ResetPasswordResponse = {
+  message: string;
+};
+
 export type ApiErrorResponse = {
   error: string;
+  message?: string;
   code?: string;
 };
 

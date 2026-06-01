@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '../../../shared/store';
 import './AdminLayout.css';
 
 const isMobileNavOpen = ref(false);
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
 
 watch(
   () => route.fullPath,
@@ -12,6 +15,12 @@ watch(
     isMobileNavOpen.value = false;
   },
 );
+
+function logout() {
+  const tenantSlug = authStore.getActiveAdminTenantSlug();
+  authStore.clearToken(tenantSlug);
+  void router.push({ name: 'admin-login', params: { tenantSlug } });
+}
 </script>
 
 <template>
@@ -36,6 +45,7 @@ watch(
           Menú
         </button>
         <h1>Admin panel</h1>
+        <button type="button" class="admin-layout__logout-btn" @click="logout">Cerrar sesión</button>
       </header>
       <main class="admin-layout__content">
         <RouterView />
