@@ -9,6 +9,18 @@ const routes = [
     redirect: `/t/${envConfig.defaultTenantSlug}`,
   },
   {
+    path: '/t/:tenantSlug/auth/password/forgot',
+    name: 'admin-password-forgot',
+    component: () => import('../../modules/admin/pages/AdminForgotPasswordPage.vue'),
+    meta: { guestOnly: true },
+  },
+  {
+    path: '/t/:tenantSlug/auth/password/reset',
+    name: 'admin-password-reset',
+    component: () => import('../../modules/admin/pages/AdminResetPasswordPage.vue'),
+    meta: { guestOnly: true },
+  },
+  {
     path: '/t/:tenantSlug',
     component: () => import('../../modules/public/components/PublicLayout.vue'),
     children: [

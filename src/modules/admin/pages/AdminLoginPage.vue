@@ -12,26 +12,33 @@ const authStore = useAuthStore();
 
 const email = ref('');
 const password = ref('');
-/** Tenant slug from URL `/:tenantSlug/admin-login`, or manual fallback. */
-const tenantSlug = ref(envConfig.defaultTenantSlug);
 const isSubmitting = ref(false);
 const errorMessage = ref<string | null>(null);
 
-const slugFromRoute = computed(() =>
-  typeof route.params.tenantSlug === 'string' && route.params.tenantSlug.length > 0
-    ? route.params.tenantSlug
-    : '',
-);
-
-const hasSlugInUrl = computed(() => slugFromRoute.value.length > 0);
+const tenantSlug = computed(() => {
+  const slug = route.params.tenantSlug;
+  if (typeof slug === 'string' && slug.trim().length > 0) {
+    return slug.trim();
+  }
+  return envConfig.defaultTenantSlug;
+});
 
 watch(
-  slugFromRoute,
-  (slug) => {
-    if (slug) tenantSlug.value = slug;
+  () => route.query.email,
+  (value) => {
+    if (typeof value === 'string' && value.length > 0) {
+      email.value = value;
+    }
   },
   { immediate: true },
 );
+
+const passwordResetSuccess = computed(() => route.query.passwordReset === '1');
+
+const forgotPasswordTo = computed(() => ({
+  name: 'admin-password-forgot' as const,
+  params: { tenantSlug: tenantSlug.value },
+}));
 
 const redirectTarget = computed(() => {
   const raw = route.query.redirect;
@@ -40,13 +47,8 @@ const redirectTarget = computed(() => {
 
 async function onSubmit() {
   errorMessage.value = null;
-  const slug = tenantSlug.value.trim();
-  if (!slug) {
-    errorMessage.value = 'Indicá el identificador de la tienda.';
-    return;
-  }
-
   isSubmitting.value = true;
+  const slug = tenantSlug.value;
   try {
     const { token } = await authService.loginTenant(slug, {
       email: email.value.trim(),
@@ -74,22 +76,13 @@ async function onSubmit() {
   <main class="admin-login">
     <div class="admin-login__card">
       <h1>Admin</h1>
-      <p v-if="hasSlugInUrl" class="admin-login__hint">
-        Ingresá con tu cuenta de administrador. El servidor usa <code>POST /t/&lt;slug&gt;/auth/login</code> con email y contraseña.
-      </p>
-      <p v-else class="admin-login__hint">
-        Indicá el slug de la tienda o usá el enlace con la forma <code>/&lt;slug&gt;/admin-login</code>.
-      </p>
+      <p class="admin-login__hint">Ingresá con tu cuenta de administrador.</p>
 
-      <p v-if="hasSlugInUrl" class="admin-login__store" aria-live="polite">
-        Tienda: <strong>{{ slugFromRoute }}</strong>
+      <p v-if="passwordResetSuccess" class="admin-login__success" role="status">
+        Contraseña actualizada. Iniciá sesión con tu nueva contraseña.
       </p>
 
       <form class="admin-login__form" @submit.prevent="onSubmit">
-        <label v-if="!hasSlugInUrl" class="admin-login__field">
-          <span>Tienda (slug)</span>
-          <input v-model="tenantSlug" type="text" name="tenantSlug" autocomplete="organization" required />
-        </label>
         <label class="admin-login__field">
           <span>Email</span>
           <input v-model="email" type="email" name="email" autocomplete="username" required />
@@ -106,6 +99,12 @@ async function onSubmit() {
         <button type="submit" class="admin-login__submit" :disabled="isSubmitting">
           {{ isSubmitting ? 'Entrando…' : 'Entrar' }}
         </button>
+
+        <p class="admin-login__link-row">
+          <RouterLink class="admin-login__link" :to="forgotPasswordTo">
+            ¿Olvidaste tu contraseña?
+          </RouterLink>
+        </p>
       </form>
     </div>
   </main>

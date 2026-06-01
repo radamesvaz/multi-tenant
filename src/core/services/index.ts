@@ -1,7 +1,12 @@
+import { postPasswordForgot, postPasswordReset } from '../auth/passwordResetApi';
 import { envConfig } from '../config';
 import type {
   ApiErrorResponse,
   AuthTokenResponse,
+  ForgotPasswordRequestBody,
+  ForgotPasswordResponse,
+  ResetPasswordRequestBody,
+  ResetPasswordResponse,
   CreateOrderPayload,
   Order,
   OrderItem,
@@ -187,7 +192,9 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
     if (message.startsWith('{')) {
       try {
         const parsed = JSON.parse(message) as ApiErrorResponse;
-        if (typeof parsed.error === 'string' && parsed.error.length > 0) {
+        if (typeof parsed.message === 'string' && parsed.message.length > 0) {
+          message = parsed.message;
+        } else if (typeof parsed.error === 'string' && parsed.error.length > 0) {
           message = parsed.error;
         }
         if (typeof parsed.code === 'string' && parsed.code.length > 0) {
@@ -341,7 +348,19 @@ export const authService = {
       body,
     });
   },
+
+  /** `POST /t/{tenant_slug}/auth/password/forgot` — public; anti-enumeration (always 200 when valid). */
+  forgotPassword(tenantSlug: string, body: ForgotPasswordRequestBody) {
+    return postPasswordForgot(tenantSlug, body);
+  },
+
+  /** `POST /t/{tenant_slug}/auth/password/reset` — public; consumes one-time token. */
+  resetPassword(tenantSlug: string, body: ResetPasswordRequestBody) {
+    return postPasswordReset(tenantSlug, body);
+  },
 };
+
+export type { ForgotPasswordResponse, ResetPasswordResponse };
 
 export const tenantService = {
   /**

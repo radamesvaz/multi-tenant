@@ -55,3 +55,26 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.admin-login__success {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #0d6b0d;
+}
+
+.admin-login__link-row {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.admin-login__link {
+  color: inherit;
+}
+
+.admin-login__requirements {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
