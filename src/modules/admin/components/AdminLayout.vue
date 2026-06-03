@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
+import { useAdminSubscriptionRefresh } from '../../../shared/composables/useAdminSubscriptionRefresh';
 import { useAuthStore } from '../../../shared/store';
+import SubscriptionPendingBanner from './SubscriptionPendingBanner.vue';
 import './AdminLayout.css';
 
 const isMobileNavOpen = ref(false);
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+useAdminSubscriptionRefresh();
 
 watch(
   () => route.fullPath,
@@ -47,6 +51,7 @@ function logout() {
         <h1>Admin panel</h1>
         <button type="button" class="admin-layout__logout-btn" @click="logout">Cerrar sesión</button>
       </header>
+      <SubscriptionPendingBanner />
       <main class="admin-layout__content">
         <RouterView />
       </main>

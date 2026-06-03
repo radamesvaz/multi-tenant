@@ -1,0 +1,45 @@
+.admin-subscription-canceled {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #f6f8f6;
+}
+
+.admin-subscription-canceled__card {
+  max-width: 32rem;
+  padding: 1.5rem;
+  border: 1px solid #dde2dd;
+  border-radius: 8px;
+  background: #fff;
+  text-align: center;
+}
+
+.admin-subscription-canceled__card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.admin-subscription-canceled__card p {
+  margin: 0 0 0.65rem;
+  color: #4a554f;
+  line-height: 1.5;
+}
+
+.admin-subscription-canceled__support {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.admin-subscription-canceled__link {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: #2f6d4a;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-subscription-canceled__link:hover {
+  text-decoration: underline;
+}

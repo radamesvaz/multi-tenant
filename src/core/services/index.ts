@@ -1,12 +1,18 @@
 import { postPasswordForgot, postPasswordReset } from '../auth/passwordResetApi';
+import { postTenantLogin } from '../auth/tenantLoginApi';
+import {
+  fetchSubscriptionContext,
+  isSubscriptionCanceledResponse,
+  SubscriptionCanceledError,
+} from '../auth/subscriptionApi';
 import { envConfig } from '../config';
 import type {
   ApiErrorResponse,
-  AuthTokenResponse,
   ForgotPasswordRequestBody,
   ForgotPasswordResponse,
   ResetPasswordRequestBody,
   ResetPasswordResponse,
+  SubscriptionResponse,
   CreateOrderPayload,
   Order,
   OrderItem,
@@ -186,6 +192,21 @@ async function httpRequest<TResponse>(path: string, options: HttpOptions = {}): 
     }
 
     const bodyText = await response.text();
+
+    if (
+      options.token &&
+      path.startsWith('/auth/') &&
+      isSubscriptionCanceledResponse(response.status, bodyText)
+    ) {
+      const { redirectOnSubscriptionCanceled } = await import(
+        '../auth/redirectOnSubscriptionCanceled'
+      );
+      await redirectOnSubscriptionCanceled();
+      throw new SubscriptionCanceledError(
+        bodyText.trim() || 'La suscripción de la cuenta está cancelada.',
+      );
+    }
+
     let message = bodyText.trim();
     let errorCode: string | undefined;
 
@@ -343,10 +364,7 @@ export const authService = {
    * Tenant login: `POST /t/{tenant_slug}/auth/login` — body is email + password only; tenant is taken from the path.
    */
   loginTenant(tenantSlug: string, body: LoginRequestBody) {
-    return httpRequest<AuthTokenResponse>(`/t/${encodeURIComponent(tenantSlug)}/auth/login`, {
-      method: 'POST',
-      body,
-    });
+    return postTenantLogin(tenantSlug, body);
   },
 
   /** `POST /t/{tenant_slug}/auth/password/forgot` — public; anti-enumeration (always 200 when valid). */
@@ -358,9 +376,14 @@ export const authService = {
   resetPassword(tenantSlug: string, body: ResetPasswordRequestBody) {
     return postPasswordReset(tenantSlug, body);
   },
+
+  /** `GET /auth/subscription` — Bearer JWT; occasional UI hydration only. */
+  getSubscription(token: string) {
+    return fetchSubscriptionContext(token);
+  },
 };
 
-export type { ForgotPasswordResponse, ResetPasswordResponse };
+export type { ForgotPasswordResponse, ResetPasswordResponse, SubscriptionResponse };
 
 export const tenantService = {
   /**

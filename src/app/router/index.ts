@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { SubscriptionCanceledError } from '../../core/auth/subscriptionApi';
 import { envConfig } from '../../core/config';
-import { useAuthStore } from '../../shared/store';
+import { useAuthStore, useSubscriptionStore } from '../../shared/store';
 import { adminRoutes } from '../../modules/admin/router/admin.routes';
 
 const routes = [
@@ -58,8 +59,9 @@ export const router = createRouter({
   routes,
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
+  const subscriptionStore = useSubscriptionStore();
 
   const tenantSlugFromRoute =
     typeof to.params.tenantSlug === 'string' && to.params.tenantSlug.length > 0
@@ -79,6 +81,10 @@ router.beforeEach((to) => {
     return { name: 'admin-forbidden' };
   }
 
+  if (to.name === 'admin-subscription-canceled') {
+    return true;
+  }
+
   if (!to.meta.requiresAuth) {
     return true;
   }
@@ -94,6 +100,28 @@ router.beforeEach((to) => {
 
   if (!authStore.isAdminForTenant(tenantSlug)) {
     return { name: 'admin-forbidden' };
+  }
+
+  if (subscriptionStore.isCanceled) {
+    return {
+      name: 'admin-subscription-canceled',
+      query: { tenantSlug },
+    };
+  }
+
+  const token = authStore.getToken(tenantSlug);
+  if (token && !subscriptionStore.isLoaded && !subscriptionStore.isCanceled) {
+    try {
+      await subscriptionStore.hydrateFromToken(token);
+    } catch (err) {
+      if (err instanceof SubscriptionCanceledError) {
+        return {
+          name: 'admin-subscription-canceled',
+          query: { tenantSlug },
+        };
+      }
+      /* Non-fatal: admin panel stays usable; payment ribbon may be missing until refresh. */
+    }
   }
 
   return true;
