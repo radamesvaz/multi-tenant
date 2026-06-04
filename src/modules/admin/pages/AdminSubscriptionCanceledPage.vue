@@ -17,6 +17,11 @@ const tenantSlug = computed(() => {
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
 
 const supportPhone = computed(() => tenantUiConfig.value.supportPhone ?? null);
+
+const adminLoginTo = computed(() => ({
+  name: 'admin-login' as const,
+  params: { tenantSlug: tenantSlug.value },
+}));
 </script>
 
 <template>
@@ -31,11 +36,11 @@ const supportPhone = computed(() => tenantUiConfig.value.supportPhone ?? null);
       <p v-if="supportPhone" class="admin-subscription-canceled__support">
         Soporte: {{ supportPhone }}
       </p>
-      <RouterLink
-        class="admin-subscription-canceled__link"
-        :to="{ name: 'public-home', params: { tenantSlug } }"
-      >
-        Volver a la tienda
+      <p class="admin-subscription-canceled__hint">
+        Cuando la cuenta se reactive, podés iniciar sesión de nuevo.
+      </p>
+      <RouterLink class="admin-subscription-canceled__btn" :to="adminLoginTo">
+        Volver al inicio de sesión
       </RouterLink>
     </div>
   </main>

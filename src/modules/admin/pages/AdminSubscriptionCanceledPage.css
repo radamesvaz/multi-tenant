@@ -32,14 +32,24 @@
   font-size: 0.95rem;
 }
 
-.admin-subscription-canceled__link {
+.admin-subscription-canceled__hint {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #6b756f;
+}
+
+.admin-subscription-canceled__btn {
   display: inline-block;
   margin-top: 1.25rem;
-  color: #2f6d4a;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  background: #2f6d4a;
+  color: #fff;
   font-weight: 500;
+  font-size: 0.95rem;
   text-decoration: none;
 }
 
-.admin-subscription-canceled__link:hover {
-  text-decoration: underline;
+.admin-subscription-canceled__btn:hover {
+  background: #265a3d;
 }

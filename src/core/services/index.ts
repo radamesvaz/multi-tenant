@@ -1,4 +1,5 @@
 import { postPasswordForgot, postPasswordReset } from '../auth/passwordResetApi';
+import { fetchPublicBranding } from '../auth/publicBrandingApi';
 import { postTenantLogin } from '../auth/tenantLoginApi';
 import {
   fetchSubscriptionContext,
@@ -20,7 +21,6 @@ import type {
   ProductListResponse,
   ProductStatus,
   TenantBranding,
-  TenantBrandingApiResponse,
   LoginRequestBody,
   UpdateAuthOrderPayload,
   UpdateProductDetailsPayload,
@@ -390,10 +390,7 @@ export const tenantService = {
    * `GET /t/{tenant_slug}/tenant/branding` — public; returns normalized `TenantBranding`.
    */
   async getPublicBranding(tenantSlug: string): Promise<TenantBranding> {
-    const raw = await httpRequest<TenantBrandingApiResponse>(
-      `/t/${encodeURIComponent(tenantSlug)}/tenant/branding`,
-      { method: 'GET' },
-    );
+    const raw = await fetchPublicBranding(tenantSlug);
     return parseTenantBrandingFields(raw.branding);
   },
 

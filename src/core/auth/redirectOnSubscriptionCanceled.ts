@@ -7,6 +7,7 @@ export async function redirectOnSubscriptionCanceled(tenantSlug?: string): Promi
   const subscription = useSubscriptionStore();
   const slug = tenantSlug ?? auth.getActiveAdminTenantSlug();
 
+  subscription.clearSubscription();
   subscription.markCanceled();
   auth.clearToken(slug);
 

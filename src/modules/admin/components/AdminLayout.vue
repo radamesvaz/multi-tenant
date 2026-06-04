@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAdminSubscriptionRefresh } from '../../../shared/composables/useAdminSubscriptionRefresh';
-import { useAuthStore } from '../../../shared/store';
+import { useAuthStore, useSubscriptionStore } from '../../../shared/store';
 import SubscriptionPendingBanner from './SubscriptionPendingBanner.vue';
 import './AdminLayout.css';
 
@@ -10,6 +10,7 @@ const isMobileNavOpen = ref(false);
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const subscriptionStore = useSubscriptionStore();
 
 useAdminSubscriptionRefresh();
 
@@ -23,6 +24,7 @@ watch(
 function logout() {
   const tenantSlug = authStore.getActiveAdminTenantSlug();
   authStore.clearToken(tenantSlug);
+  subscriptionStore.clearSubscription();
   void router.push({ name: 'admin-login', params: { tenantSlug } });
 }
 </script>
