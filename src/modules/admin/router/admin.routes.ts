@@ -21,6 +21,11 @@ export const adminRoutes = [
     component: () => import('../pages/AdminForbiddenPage.vue'),
   },
   {
+    path: '/admin/subscription-canceled',
+    name: 'admin-subscription-canceled',
+    component: () => import('../pages/AdminSubscriptionCanceledPage.vue'),
+  },
+  {
     path: '/admin',
     component: () => import('../components/AdminLayout.vue'),
     children: [

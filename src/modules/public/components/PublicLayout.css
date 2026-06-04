@@ -160,3 +160,70 @@
     font-size: var(--font-xs);
   }
 }
+
+.store-layout--unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.public-unavailable {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.public-unavailable__card {
+  max-width: 32rem;
+  padding: 1.5rem;
+  border: 1px solid var(--tenant-line);
+  border-radius: 8px;
+  background: var(--tenant-surface);
+  text-align: center;
+}
+
+.public-unavailable__card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.public-unavailable__card p {
+  margin: 0 0 0.65rem;
+  color: var(--tenant-muted);
+  line-height: 1.5;
+}
+
+.public-unavailable__support {
+  font-size: 0.95rem;
+}
+
+.public-unavailable__actions {
+  margin-top: 1.25rem;
+}
+
+.public-unavailable__btn {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  background: var(--tenant-primary);
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.public-unavailable__btn:hover {
+  filter: brightness(0.92);
+}
+
+.public-load-error {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #e8c547;
+  border-radius: 6px;
+  background: #fff8e1;
+  color: #5c4a00;
+  font-size: 0.9rem;
+}

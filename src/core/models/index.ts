@@ -140,7 +140,26 @@ export type PatchTenantBrandingLogoResponse = {
   message?: string;
 };
 
+/** Mock / static tenant config only — not the shape returned by `GET /auth/subscription`. */
 export type TenantSubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+
+/** Values from `GET /auth/subscription` (admin panel). */
+export type TenantSubscriptionApiStatus = 'active' | 'pending' | 'canceled';
+
+export type SubscriptionContext = {
+  status: TenantSubscriptionApiStatus;
+  plan_code: string;
+  current_period_end?: string;
+  grace_period_end?: string;
+  days_until_cancel?: number;
+};
+
+/** `GET /auth/subscription` — 200 response. */
+export type SubscriptionResponse = {
+  tenant_id: number;
+  tenant_slug: string;
+  subscription: SubscriptionContext;
+};
 
 export type TenantConfig = {
   slug: string;

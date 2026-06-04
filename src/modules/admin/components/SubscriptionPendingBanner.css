@@ -1,0 +1,23 @@
+.subscription-pending-banner {
+  flex-shrink: 0;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid #e8c547;
+  background: #fff8e1;
+  color: #5c4a00;
+}
+
+.subscription-pending-banner__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 960px) {
+  .subscription-pending-banner {
+    padding: 0.7rem 1.25rem;
+  }
+
+  .subscription-pending-banner__text {
+    font-size: 0.925rem;
+  }
+}
