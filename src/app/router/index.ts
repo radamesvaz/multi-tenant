@@ -22,6 +22,12 @@ const routes = [
     meta: { guestOnly: true },
   },
   {
+    path: '/t/:tenantSlug/auth/invitations/accept',
+    name: 'admin-invitation-accept',
+    component: () => import('../../modules/admin/pages/AdminAcceptInvitationPage.vue'),
+    meta: { guestOnly: true },
+  },
+  {
     path: '/t/:tenantSlug',
     component: () => import('../../modules/public/components/PublicLayout.vue'),
     children: [

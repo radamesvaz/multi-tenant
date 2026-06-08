@@ -51,6 +51,12 @@ export const adminRoutes = [
         component: () => import('../pages/AdminBrandingPage.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: 'invitations',
+        name: 'admin-invitations',
+        component: () => import('../pages/AdminInvitationsPage.vue'),
+        meta: { requiresAuth: true },
+      },
     ],
   },
 ];

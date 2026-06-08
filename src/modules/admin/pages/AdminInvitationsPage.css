@@ -1,0 +1,100 @@
+.admin-invitations__header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-invitations__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.admin-invitations__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c6360;
+}
+
+.admin-invitations__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 24rem;
+}
+
+.admin-invitations__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.admin-invitations__field input {
+  padding: 0.5rem 0.6rem;
+}
+
+.admin-invitations__error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #b00020;
+}
+
+.admin-invitations__submit {
+  align-self: flex-start;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.admin-invitations__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-invitations__last {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d8e0db;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+}
+
+.admin-invitations__last-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.admin-invitations__last-detail {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.admin-invitations__last-detail strong {
+  font-weight: 600;
+}
+
+.admin-invitations__last-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #5c6360;
+}
+
+.admin-invitations__last-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.admin-invitations__action {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.admin-invitations__action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-invitations__action--danger {
+  color: #b00020;
+  border-color: #e8b4b4;
+}
