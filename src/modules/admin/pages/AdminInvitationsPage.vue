@@ -121,10 +121,6 @@ function invitationMutationErrorMessage(err: InvitationApiError): string {
     return 'El envío de correo no está disponible. Contactá a soporte.';
   }
 
-  if (err.errorCode === INVITATION_ERROR_CODES.FORBIDDEN) {
-    return 'No tenés permiso para invitar usuarios.';
-  }
-
   return err.message;
 }
 

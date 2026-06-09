@@ -245,7 +245,6 @@ export type AcceptInvitationResponse = {
 /** Stable `error` codes from invitation handlers — for UI branching and i18n keys. */
 export const INVITATION_ERROR_CODES = {
   EMAIL_ALREADY_EXISTS: 'email_already_exists',
-  FORBIDDEN: 'forbidden',
   TOO_MANY_REQUESTS: 'too_many_requests',
   EXPIRED_TOKEN: 'expired_token',
   TOKEN_ALREADY_CONSUMED: 'token_already_consumed',
