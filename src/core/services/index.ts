@@ -1,3 +1,9 @@
+import {
+  postAcceptInvitation,
+  postCreateInvitation,
+  postResendInvitation,
+  postRevokeInvitation,
+} from '../auth/invitationsApi';
 import { postPasswordForgot, postPasswordReset } from '../auth/passwordResetApi';
 import { fetchPublicBranding } from '../auth/publicBrandingApi';
 import { postTenantLogin } from '../auth/tenantLoginApi';
@@ -21,7 +27,11 @@ import type {
   ProductListResponse,
   ProductStatus,
   TenantBranding,
+  AcceptInvitationRequestBody,
+  AcceptInvitationResponse,
+  InvitationMutationResponse,
   LoginRequestBody,
+  RevokeInvitationResponse,
   UpdateAuthOrderPayload,
   UpdateProductDetailsPayload,
   UpdateTenantBrandingColorsPayload,
@@ -383,7 +393,36 @@ export const authService = {
   },
 };
 
-export type { ForgotPasswordResponse, ResetPasswordResponse, SubscriptionResponse };
+export type {
+  AcceptInvitationResponse,
+  ForgotPasswordResponse,
+  InvitationMutationResponse,
+  ResetPasswordResponse,
+  RevokeInvitationResponse,
+  SubscriptionResponse,
+};
+
+export const invitationService = {
+  /** `POST /auth/invitations` — Bearer JWT; tenant from token (variant A). */
+  createInvitation(token: string, email: string) {
+    return postCreateInvitation(token, { email });
+  },
+
+  /** `POST /auth/invitations/{id}/resend` — replaces prior token; updates `id` in response. */
+  resendInvitation(token: string, invitationId: number) {
+    return postResendInvitation(token, invitationId);
+  },
+
+  /** `POST /auth/invitations/{id}/revoke` */
+  revokeInvitation(token: string, invitationId: number) {
+    return postRevokeInvitation(token, invitationId);
+  },
+
+  /** `POST /t/{tenant_slug}/auth/invitations/accept` — public; returns session JWT. */
+  acceptInvitation(tenantSlug: string, payload: AcceptInvitationRequestBody) {
+    return postAcceptInvitation(tenantSlug, payload);
+  },
+};
 
 export const tenantService = {
   /**

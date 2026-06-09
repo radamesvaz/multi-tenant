@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useAdminSubscriptionRefresh } from '../../../shared/composables/useAdminSubscriptionRefresh';
 import { useAuthStore, useSubscriptionStore } from '../../../shared/store';
@@ -11,6 +11,9 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
+
+const activeTenantSlug = computed(() => authStore.getActiveAdminTenantSlug());
+const showInvitationsNav = computed(() => authStore.isAdminForTenant(activeTenantSlug.value));
 
 useAdminSubscriptionRefresh();
 
@@ -42,6 +45,9 @@ function logout() {
         <RouterLink :to="{ name: 'admin-orders' }">Órdenes</RouterLink>
         <RouterLink :to="{ name: 'admin-products' }">Productos</RouterLink>
         <RouterLink :to="{ name: 'admin-branding' }">Personalización</RouterLink>
+        <RouterLink v-if="showInvitationsNav" :to="{ name: 'admin-invitations' }">
+          Invitar usuario
+        </RouterLink>
       </nav>
     </aside>
     <div v-if="isMobileNavOpen" class="admin-layout__backdrop" @click="isMobileNavOpen = false" />

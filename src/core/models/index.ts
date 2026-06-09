@@ -208,3 +208,52 @@ export type ApiErrorResponse = {
   code?: string;
 };
 
+/** POST /auth/invitations */
+export type CreateInvitationRequestBody = {
+  email: string;
+};
+
+/** POST /auth/invitations and POST /auth/invitations/{id}/resend — 201 Created */
+export type InvitationMutationResponse = {
+  id: number;
+  email: string;
+  expires_at: string;
+  message: string;
+};
+
+/** POST /auth/invitations/{id}/revoke — 200 OK */
+export type RevokeInvitationResponse = {
+  message: string;
+};
+
+/** POST /t/{tenant_slug}/auth/invitations/accept */
+export type AcceptInvitationRequestBody = {
+  token: string;
+  name: string;
+  phone?: string;
+  password: string;
+};
+
+/** POST /t/{tenant_slug}/auth/invitations/accept — 201 Created */
+export type AcceptInvitationResponse = {
+  message: string;
+  token: string;
+  email: string;
+  user_id: number;
+};
+
+/** Stable `error` codes from invitation handlers — for UI branching and i18n keys. */
+export const INVITATION_ERROR_CODES = {
+  EMAIL_ALREADY_EXISTS: 'email_already_exists',
+  TOO_MANY_REQUESTS: 'too_many_requests',
+  EXPIRED_TOKEN: 'expired_token',
+  TOKEN_ALREADY_CONSUMED: 'token_already_consumed',
+  TOKEN_REVOKED: 'token_revoked',
+  INVALID_TOKEN: 'invalid_token',
+  WEAK_PASSWORD: 'weak_password',
+  SERVICE_UNCONFIGURED: 'service_unconfigured',
+} as const;
+
+export type InvitationErrorCode =
+  (typeof INVITATION_ERROR_CODES)[keyof typeof INVITATION_ERROR_CODES];
+
