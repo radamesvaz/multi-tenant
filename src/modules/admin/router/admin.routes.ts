@@ -46,6 +46,12 @@ export const adminRoutes = [
         meta: { requiresAuth: true },
       },
       {
+        path: 'products/new',
+        name: 'admin-product-new',
+        component: () => import('../pages/AdminProductFormPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
         path: 'branding',
         name: 'admin-branding',
         component: () => import('../pages/AdminBrandingPage.vue'),

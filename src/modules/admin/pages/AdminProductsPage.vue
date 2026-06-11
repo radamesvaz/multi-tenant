@@ -7,6 +7,7 @@ import type {
 } from '../../../core/models';
 import { envConfig } from '../../../core/config/env';
 import { productThumbnailUploadHintEs } from '../../../core/constants/productThumbnailSpec';
+import { RouterLink } from 'vue-router';
 import { ProductSearchBar } from '../../../shared/components';
 import { useAdminProductsStore } from '../store';
 import './AdminProductsPage.css';
@@ -255,10 +256,14 @@ async function removeGalleryImage(url: string) {
 <template>
   <div class="admin-products">
     <header class="admin-products__header">
-      <h1>Productos</h1>
+      <div class="admin-products__header-row">
+        <h1>Productos</h1>
+        <RouterLink :to="{ name: 'admin-product-new' }" class="admin-products__new-btn">
+          Nuevo producto
+        </RouterLink>
+      </div>
       <p class="admin-products__subtitle">
-        Catálogo paginado (<code>GET /t/&lt;slug&gt;/products</code> con JWT, <code>limit</code> /
-        <code>cursor</code> / <code>q</code>). Hacé clic en una fila para editar.
+        Catálogo paginado con búsqueda. Hacé clic en una fila para editar o creá un producto nuevo.
       </p>
     </header>
 
@@ -290,7 +295,10 @@ async function removeGalleryImage(url: string) {
         {{ productsStore.error }}
       </p>
       <div v-if="productsStore.products.length === 0" class="admin-products__state">
-        No hay productos para este tenant.
+        <p>No hay productos para este tenant.</p>
+        <RouterLink :to="{ name: 'admin-product-new' }" class="admin-products__new-btn">
+          Crear primer producto
+        </RouterLink>
       </div>
 
       <div v-else class="admin-products__table-wrap">

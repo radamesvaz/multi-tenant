@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia';
-import type { Product, UpdateProductDetailsPayload } from '../../../core/models';
+import type {
+  CreateProductPayload,
+  CreateProductResponse,
+  Product,
+  UpdateProductDetailsPayload,
+} from '../../../core/models';
 import { productService } from '../../../core/services';
 import { useAuthStore } from '../../../shared/store';
 
@@ -125,6 +130,41 @@ export const useAdminProductsStore = defineStore('admin-products', {
     /** @deprecated Use `loadFirstPage` */
     async loadProducts() {
       await this.loadFirstPage('');
+    },
+
+    async createProduct(payload: CreateProductPayload): Promise<CreateProductResponse> {
+      this.error = null;
+      try {
+        const { token } = this.getAuthContext();
+        const response = await productService.createAuthProduct(token, payload);
+        await this.loadFirstPage(this.listQuery);
+        return response;
+      } catch (error) {
+        const code = (error as Error & { code?: string }).code;
+        this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
+        throw error;
+      }
+    },
+
+    async createProductWithImages(
+      payload: CreateProductPayload,
+      imageFiles: File[] = [],
+    ): Promise<CreateProductResponse> {
+      const response = await this.createProduct(payload);
+      if (imageFiles.length === 0) {
+        return response;
+      }
+      this.error = null;
+      try {
+        const { token } = this.getAuthContext();
+        await productService.addAuthProductImages(token, response.product_id, imageFiles);
+        await this.refreshProductById(response.product_id);
+        return response;
+      } catch (error) {
+        const code = (error as Error & { code?: string }).code;
+        this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
+        throw error;
+      }
     },
 
     async updateProductDetails(id: number, payload: UpdateProductDetailsPayload) {
