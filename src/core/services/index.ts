@@ -21,6 +21,8 @@ import type {
   ResetPasswordResponse,
   SubscriptionResponse,
   CreateOrderPayload,
+  CreateProductPayload,
+  CreateProductResponse,
   Order,
   OrderItem,
   Product,
@@ -522,6 +524,15 @@ export const productService = {
 
   getProductById(tenantSlug: string, id: number, options?: { signal?: AbortSignal }) {
     return this.getTenantProductById(tenantSlug, id, options);
+  },
+
+  /** `POST /auth/products` — create product (JSON only; images via dedicated endpoints). */
+  async createAuthProduct(token: string, payload: CreateProductPayload) {
+    return httpRequest<CreateProductResponse>('/auth/products', {
+      method: 'POST',
+      token,
+      body: payload,
+    });
   },
 
   async updateAuthProductDetails(token: string, id: number, payload: UpdateProductDetailsPayload) {

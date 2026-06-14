@@ -30,6 +30,26 @@ export type UpdateProductDetailsPayload = {
   available: boolean;
 };
 
+/** Values accepted by `POST /auth/products` for `status` (MVP). */
+export type CreateProductStatus = 'active' | 'inactive' | 'deleted';
+
+/** Body for `POST /auth/products` — JSON only; images via separate endpoints. */
+export type CreateProductPayload = {
+  name: string;
+  description: string;
+  price: number;
+  available: boolean;
+  stock: number;
+  status: CreateProductStatus;
+};
+
+/** `POST /auth/products` — 200 response. */
+export type CreateProductResponse = {
+  message: string;
+  product_id: number;
+  image_urls: string[];
+};
+
 /** Order line as returned by `GET /auth/orders` (nested items in `OrderItems` or `order_items`). */
 export type OrderItem = {
   id_order_item: number;

@@ -1,0 +1,244 @@
+.admin-product-form__header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-product-form__header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-product-form__header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.admin-product-form__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c6360;
+}
+
+.admin-product-form__back {
+  font-size: 0.9rem;
+  color: #2d6a4f;
+  text-decoration: none;
+}
+
+.admin-product-form__back:hover {
+  text-decoration: underline;
+}
+
+.admin-product-form__form {
+  max-width: 40rem;
+}
+
+.admin-product-form__fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.admin-product-form__legend {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-product-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .admin-product-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-product-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.admin-product-form__field--full {
+  margin-bottom: 0.75rem;
+}
+
+.admin-product-form__field input,
+.admin-product-form__field select,
+.admin-product-form__field textarea {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #cdd3ce;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.admin-product-form__field input[aria-invalid='true'],
+.admin-product-form__field textarea[aria-invalid='true'] {
+  border-color: #b00020;
+}
+
+.admin-product-form__field-error {
+  font-size: 0.82rem;
+  color: #b00020;
+}
+
+.admin-product-form__availability {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.admin-product-form__availability--locked {
+  opacity: 0.75;
+}
+
+.admin-product-form__availability-label {
+  font-size: 0.9rem;
+}
+
+.admin-product-form__switch {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.admin-product-form__switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.admin-product-form__switch-track {
+  display: block;
+  width: 2.4rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #cdd3ce;
+  transition: background 0.15s;
+}
+
+.admin-product-form__switch input:checked + .admin-product-form__switch-track {
+  background: #2d6a4f;
+}
+
+.admin-product-form__switch input:disabled + .admin-product-form__switch-track {
+  cursor: not-allowed;
+}
+
+.admin-product-form__availability-value {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.admin-product-form__availability-value--on {
+  color: #1b5e20;
+}
+
+.admin-product-form__availability-value--off {
+  color: #5c6360;
+}
+
+.admin-product-form__error {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #b00020;
+}
+
+.admin-product-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-product-form__btn {
+  padding: 0.55rem 1rem;
+  border: 1px solid #2d6a4f;
+  border-radius: 6px;
+  background: #2d6a4f;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-product-form__btn:hover:not(:disabled) {
+  background: #245a42;
+}
+
+.admin-product-form__btn--secondary {
+  border-color: #cdd3ce;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.admin-product-form__btn--secondary:hover:not(:disabled) {
+  background: #f4f6f4;
+}
+
+.admin-product-form__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-product-form__images {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  max-width: 40rem;
+  border: 1px solid #d8e0db;
+  border-radius: 8px;
+  background: #f9fbf9;
+}
+
+.admin-product-form__images-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.admin-product-form__images-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  color: #5c6360;
+}
+
+.admin-product-form__previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-product-form__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 6rem;
+}
+
+.admin-product-form__preview img {
+  width: 6rem;
+  height: 4.5rem;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #dde2dd;
+}
+
+.admin-product-form__preview-name {
+  font-size: 0.72rem;
+  color: #5c6360;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
