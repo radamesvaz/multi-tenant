@@ -428,7 +428,7 @@ export const invitationService = {
 
 export const tenantService = {
   /**
-   * `GET /t/{tenant_slug}/tenant/branding` — public; returns normalized `TenantBranding`.
+   * `GET /t/{tenant_slug}/branding` — public; returns normalized `TenantBranding`.
    */
   async getPublicBranding(tenantSlug: string): Promise<TenantBranding> {
     const raw = await fetchPublicBranding(tenantSlug);

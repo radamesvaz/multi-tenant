@@ -128,7 +128,7 @@ export const EMPTY_TENANT_BRANDING: TenantBranding = {
   accent_color: null,
 };
 
-/** `GET /t/{tenant_slug}/tenant/branding` — envelope; `branding` maps to `TenantBranding` after parsing. */
+/** `GET /t/{tenant_slug}/branding` — envelope; `branding` maps to `TenantBranding` after parsing. */
 export type TenantBrandingApiResponse = {
   tenant_id: number;
   tenant_slug: string;

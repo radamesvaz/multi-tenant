@@ -80,7 +80,7 @@ const modelValue = defineModel<string>({ required: true });
 
 /**
  * Fondo del buscador: solo colores de branding (no primario).
- * Mezcla acento + secundario del GET `/t/.../tenant/branding` para que entre ambos
+ * Mezcla acento + secundario del GET `/t/.../branding` para que entre ambos
  * tokens del backend; el acento aporta contraste con el icono claro.
  */
 .product-search--storefront .product-search__shell {
