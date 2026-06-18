@@ -50,11 +50,15 @@ async function parseErrorMessage(response: Response, bodyText: string): Promise<
   return bodyText.trim() || GENERIC_LOAD_ERROR_MESSAGE;
 }
 
-/** `GET /t/{tenant_slug}/tenant/branding` — public; plain-text errors on 404. */
+export function publicBrandingPath(tenantSlug: string): string {
+  return `/t/${encodeURIComponent(tenantSlug)}/branding`;
+}
+
+/** `GET /t/{tenant_slug}/branding` — public; plain-text errors on 404. */
 export async function fetchPublicBranding(
   tenantSlug: string,
 ): Promise<TenantBrandingApiResponse> {
-  const url = `${envConfig.apiBaseUrl}/t/${encodeURIComponent(tenantSlug)}/tenant/branding`;
+  const url = `${envConfig.apiBaseUrl}${publicBrandingPath(tenantSlug)}`;
   const response = await fetch(url, { method: 'GET' });
 
   if (response.ok) {

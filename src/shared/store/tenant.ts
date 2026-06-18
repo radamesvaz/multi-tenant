@@ -32,7 +32,7 @@ export const useTenantStore = defineStore('tenant', {
       this.tenantSlug = slug;
     },
     /**
-     * Loads branding from `GET /t/{slug}/tenant/branding`. Mocks only supply metadata;
+     * Loads branding from `GET /t/{slug}/branding`. Mocks only supply metadata;
      * colors and logo always come from the API.
      */
     async loadBrandingForSlug(slug: string) {
