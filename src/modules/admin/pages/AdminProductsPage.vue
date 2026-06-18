@@ -41,8 +41,20 @@ const modalError = ref<string | null>(null);
 const modalSuccess = ref<string | null>(null);
 
 const selectedGalleryFiles = ref<File[]>([]);
+const galleryPreviewUrls = ref<string[]>([]);
 
 const thumbnailUploadHint = productThumbnailUploadHintEs();
+const pendingGalleryCount = computed(() => selectedGalleryFiles.value.length);
+const galleryUploadButtonLabel = computed(() => {
+  const count = pendingGalleryCount.value;
+  if (isUpdatingGallery.value) return 'Subiendo…';
+  if (count === 1) return 'Subir 1 imagen';
+  return `Subir ${count} imágenes`;
+});
+const savedGalleryCount = computed(() => selectedProduct.value?.image_urls.length ?? 0);
+const hasGalleryScrollContent = computed(
+  () => pendingGalleryCount.value > 0 || savedGalleryCount.value > 0,
+);
 
 const SEARCH_DEBOUNCE_MS = 400;
 const searchInput = ref('');
@@ -91,6 +103,39 @@ function triggerThumbnailFilePicker() {
   thumbnailFileInput.value?.click();
 }
 
+function revokeGalleryPreviews() {
+  for (const url of galleryPreviewUrls.value) {
+    URL.revokeObjectURL(url);
+  }
+  galleryPreviewUrls.value = [];
+  selectedGalleryFiles.value = [];
+  if (galleryFileInput.value) galleryFileInput.value.value = '';
+}
+
+function triggerGalleryFilePicker() {
+  galleryFileInput.value?.click();
+}
+
+function appendGalleryFiles(files: File[]) {
+  const accepted = files.filter((file) => file.type.startsWith('image/'));
+  if (accepted.length === 0) return;
+  selectedGalleryFiles.value = [...selectedGalleryFiles.value, ...accepted];
+  galleryPreviewUrls.value = [
+    ...galleryPreviewUrls.value,
+    ...accepted.map((file) => URL.createObjectURL(file)),
+  ];
+}
+
+function removePendingGalleryFile(index: number) {
+  const previewUrl = galleryPreviewUrls.value[index];
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  selectedGalleryFiles.value = selectedGalleryFiles.value.filter((_, i) => i !== index);
+  galleryPreviewUrls.value = galleryPreviewUrls.value.filter((_, i) => i !== index);
+  if (selectedGalleryFiles.value.length === 0 && galleryFileInput.value) {
+    galleryFileInput.value.value = '';
+  }
+}
+
 let removeKeyListener: (() => void) | undefined;
 onMounted(() => {
   const onKey = (e: KeyboardEvent) => {
@@ -104,11 +149,13 @@ onUnmounted(() => {
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   removeKeyListener?.();
   revokeThumbnailLocalPreview();
+  revokeGalleryPreviews();
 });
 
 watch(selectedProductId, (id) => {
   if (id == null) {
     revokeThumbnailLocalPreview();
+    revokeGalleryPreviews();
     return;
   }
   const p = productsStore.products.find((x) => x.id_product === id);
@@ -130,8 +177,7 @@ function hydrateFormFromProduct(p: Product) {
   formStock.value = p.stock == null ? '' : String(p.stock);
   formStatus.value = p.status;
   formAvailable.value = p.available;
-  selectedGalleryFiles.value = [];
-  if (galleryFileInput.value) galleryFileInput.value.value = '';
+  revokeGalleryPreviews();
   if (thumbnailFileInput.value) thumbnailFileInput.value.value = '';
 }
 
@@ -218,7 +264,18 @@ async function savePendingThumbnail() {
 
 function onGalleryFilesSelected(e: Event) {
   const input = e.target as HTMLInputElement;
-  selectedGalleryFiles.value = Array.from(input.files ?? []);
+  appendGalleryFiles(Array.from(input.files ?? []));
+  input.value = '';
+}
+
+function onGalleryDrop(e: DragEvent) {
+  e.preventDefault();
+  if (isUpdatingGallery.value) return;
+  appendGalleryFiles(Array.from(e.dataTransfer?.files ?? []));
+}
+
+function onGalleryDragOver(e: DragEvent) {
+  e.preventDefault();
 }
 
 async function addGalleryImages() {
@@ -473,52 +530,124 @@ async function removeGalleryImage(url: string) {
 
         <section class="admin-product-modal__section">
           <h3 class="admin-product-modal__section-title">Galería</h3>
-          <div class="admin-product-modal__inline">
+          <div class="admin-product-modal__gallery-pick">
             <input
               ref="galleryFileInput"
               type="file"
               multiple
-              accept="image/*"
-              class="admin-product-modal__file"
+              accept="image/jpeg,image/png,image/webp,image/*"
+              class="admin-product-modal__file admin-product-modal__file--hidden"
+              tabindex="-1"
               :disabled="isUpdatingGallery"
               @change="onGalleryFilesSelected"
             />
-          </div>
-          <div class="admin-product-modal__actions">
             <button
               type="button"
-              class="admin-product-modal__btn admin-product-modal__btn--secondary"
-              :disabled="isUpdatingGallery || selectedGalleryFiles.length === 0"
+              class="admin-product-modal__gallery-dropzone"
+              :disabled="isUpdatingGallery"
+              aria-label="Seleccionar imágenes para la galería"
+              @click="triggerGalleryFilePicker"
+              @dragover="onGalleryDragOver"
+              @drop="onGalleryDrop"
+            >
+              <span class="admin-product-modal__gallery-dropzone-title">Elegir imágenes</span>
+              <span class="admin-product-modal__gallery-dropzone-hint">
+                Hacé clic o arrastrá archivos aquí (JPG, PNG o WebP)
+              </span>
+            </button>
+
+            <button
+              v-if="pendingGalleryCount > 0"
+              type="button"
+              class="admin-product-modal__btn"
+              :disabled="isUpdatingGallery"
               @click="addGalleryImages"
             >
-              Agregar imágenes
+              {{ galleryUploadButtonLabel }}
             </button>
           </div>
 
-          <ul class="admin-product-modal__gallery-list">
-            <li v-for="url in selectedProduct.image_urls" :key="url" class="admin-product-modal__gallery-item">
-              <div class="admin-product-modal__gallery-thumb">
-                <img
-                  :src="resolveMediaUrl(url) ?? url"
-                  :title="url"
-                  alt=""
-                  class="admin-product-modal__gallery-img"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="admin-product-modal__gallery-item-actions">
-                <button
-                  type="button"
-                  class="admin-product-modal__btn admin-product-modal__btn--danger"
-                  :disabled="isUpdatingGallery"
-                  @click="removeGalleryImage(url)"
+          <p
+            v-if="!hasGalleryScrollContent"
+            class="admin-product-modal__gallery-saved-label admin-product-modal__gallery-saved-label--empty"
+          >
+            Aún no hay imágenes en la galería.
+          </p>
+
+          <div
+            v-else
+            class="admin-product-modal__gallery-scroll"
+            role="region"
+            aria-label="Imágenes de la galería"
+            tabindex="0"
+          >
+            <template v-if="galleryPreviewUrls.length > 0">
+              <p class="admin-product-modal__gallery-saved-label">
+                Por subir ({{ pendingGalleryCount }})
+              </p>
+              <ul class="admin-product-modal__gallery-pending">
+                <li
+                  v-for="(url, index) in galleryPreviewUrls"
+                  :key="url"
+                  class="admin-product-modal__gallery-pending-item"
                 >
-                  Eliminar
-                </button>
-              </div>
-            </li>
-          </ul>
+                  <div class="admin-product-modal__gallery-pending-thumb">
+                    <img
+                      :src="url"
+                      alt=""
+                      class="admin-product-modal__gallery-pending-img"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <span class="admin-product-modal__gallery-pending-name">
+                    {{ selectedGalleryFiles[index]?.name }}
+                  </span>
+                  <button
+                    type="button"
+                    class="admin-product-modal__btn admin-product-modal__btn--secondary admin-product-modal__gallery-pending-remove"
+                    :disabled="isUpdatingGallery"
+                    @click="removePendingGalleryFile(index)"
+                  >
+                    Quitar
+                  </button>
+                </li>
+              </ul>
+            </template>
+
+            <p
+              v-if="savedGalleryCount > 0"
+              class="admin-product-modal__gallery-saved-label"
+              :class="{ 'admin-product-modal__gallery-saved-label--spaced': galleryPreviewUrls.length > 0 }"
+            >
+              Imágenes guardadas ({{ savedGalleryCount }})
+            </p>
+
+            <ul v-if="savedGalleryCount > 0" class="admin-product-modal__gallery-list">
+              <li v-for="url in selectedProduct.image_urls" :key="url" class="admin-product-modal__gallery-item">
+                <div class="admin-product-modal__gallery-thumb">
+                  <img
+                    :src="resolveMediaUrl(url) ?? url"
+                    :title="url"
+                    alt=""
+                    class="admin-product-modal__gallery-img"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="admin-product-modal__gallery-item-actions">
+                  <button
+                    type="button"
+                    class="admin-product-modal__btn admin-product-modal__btn--danger"
+                    :disabled="isUpdatingGallery"
+                    @click="removeGalleryImage(url)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
         </section>
       </div>
     </div>
