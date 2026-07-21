@@ -35,5 +35,16 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.nodeBuiltin,
+      },
+    },
+  },
   eslintConfigPrettier,
 );
