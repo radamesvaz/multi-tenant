@@ -1,0 +1,23 @@
+---
+description: Multi-tenant Vue frontend architecture — align with .ai/memory/architecture.md
+globs: src/**/*.{ts,vue,css}
+alwaysApply: false
+---
+
+# Frontend architecture (short rules)
+
+Full source of truth: `.ai/memory/architecture.md`. Local Ollama review uses the same rules against git diffs.
+
+## Layers
+- `app/` — bootstrap + root router only
+- `core/` — config, models, services, auth APIs, utils (no Vue SFCs; never import modules/shared)
+- `modules/public` — storefront; `modules/admin` — admin panel
+- `shared/` — cross-cutting UI, composables, auth/tenant/subscription stores
+
+## Must follow
+- `<script setup lang="ts">`; relative imports (no new `@/` aliases)
+- HTTP via `core/services` (or existing `core/auth/*Api`); no raw `fetch` in SFCs for new work
+- Public tenant from `/t/:tenantSlug`; admin tenant from auth store context
+- Per-tenant tokens: `token:{slug}` via `shared/constants/storageKeys.ts`
+- Env only through `envConfig`; types from `core/models`
+- Match API contracts; do not invent payload fields or branding colors client-side

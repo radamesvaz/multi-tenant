@@ -25,3 +25,7 @@ dist-ssr
 
 markdowns/
 .env
+
+# Local AI review outputs (keep .ai/memory + prompts tracked)
+.ai/reviews/*.md
+!.ai/reviews/.gitkeep

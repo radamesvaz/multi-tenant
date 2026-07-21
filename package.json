@@ -10,7 +10,10 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js,vue}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx,js,vue}\" --fix",
     "format": "prettier \"src/**/*.{ts,tsx,js,vue,css,scss,md}\" --check",
-    "format:fix": "prettier \"src/**/*.{ts,tsx,js,vue,css,scss,md}\" --write"
+    "format:fix": "prettier \"src/**/*.{ts,tsx,js,vue,css,scss,md}\" --write",
+    "ai:review": "node scripts/ai-review.mjs",
+    "ai:review:staged": "node scripts/ai-review.mjs --staged",
+    "ai:review:dry-run": "node scripts/ai-review.mjs --dry-run"
   },
   "dependencies": {
     "@vue/test-utils": "^2.4.6",
