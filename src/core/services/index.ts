@@ -7,6 +7,7 @@ import {
 import { postPasswordForgot, postPasswordReset } from '../auth/passwordResetApi';
 import { fetchPublicBranding } from '../auth/publicBrandingApi';
 import { postTenantLogin } from '../auth/tenantLoginApi';
+import { postTenantRegister } from '../auth/tenantSignupApi';
 import {
   fetchSubscriptionContext,
   isSubscriptionCanceledResponse,
@@ -34,6 +35,8 @@ import type {
   InvitationMutationResponse,
   LoginRequestBody,
   RevokeInvitationResponse,
+  TenantRegisterRequestBody,
+  TenantRegisterResponse,
   UpdateAuthOrderPayload,
   UpdateProductDetailsPayload,
   UpdateTenantBrandingColorsPayload,
@@ -402,6 +405,7 @@ export type {
   ResetPasswordResponse,
   RevokeInvitationResponse,
   SubscriptionResponse,
+  TenantRegisterResponse,
 };
 
 export const invitationService = {
@@ -423,6 +427,13 @@ export const invitationService = {
   /** `POST /t/{tenant_slug}/auth/invitations/accept` — public; returns session JWT. */
   acceptInvitation(tenantSlug: string, payload: AcceptInvitationRequestBody) {
     return postAcceptInvitation(tenantSlug, payload);
+  },
+};
+
+export const tenantSignupService = {
+  /** `POST /public/tenant-register` — public; consumes OTC and returns admin JWT. */
+  registerTenant(body: TenantRegisterRequestBody) {
+    return postTenantRegister(body);
   },
 };
 
