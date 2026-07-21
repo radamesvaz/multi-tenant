@@ -277,3 +277,25 @@ export const INVITATION_ERROR_CODES = {
 export type InvitationErrorCode =
   (typeof INVITATION_ERROR_CODES)[keyof typeof INVITATION_ERROR_CODES];
 
+/** POST /public/tenant-register */
+export type TenantRegisterRequestBody = {
+  tenant_name: string;
+  tenant_slug: string;
+  admin_name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  one_time_code: string;
+};
+
+/** POST /public/tenant-register — 201 Created */
+export type TenantRegisterResponse = {
+  message: string;
+  token: string;
+  tenant_id: number;
+  tenant_slug: string;
+  tenant_name: string;
+  admin_id: number;
+  admin_email: string;
+};
+

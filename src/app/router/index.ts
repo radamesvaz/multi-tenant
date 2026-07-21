@@ -28,6 +28,12 @@ const routes = [
     meta: { guestOnly: true },
   },
   {
+    path: '/tenant-register',
+    name: 'tenant-register',
+    component: () => import('../../modules/admin/pages/TenantRegisterPage.vue'),
+    meta: { guestOnly: true },
+  },
+  {
     path: '/t/:tenantSlug',
     component: () => import('../../modules/public/components/PublicLayout.vue'),
     children: [
@@ -78,6 +84,21 @@ router.beforeEach(async (to) => {
   const tenantSlug = tenantSlugFromRoute ?? authStore.getActiveAdminTenantSlug();
 
   if (to.meta.guestOnly) {
+    /**
+     * `/tenant-register` has no tenant in the path. Allow unauthenticated visitors through
+     * even if a previous admin tenant context exists in localStorage without a live session.
+     */
+    if (to.name === 'tenant-register') {
+      const activeSlug = authStore.getActiveAdminTenantSlug();
+      if (
+        authStore.isAuthenticatedForTenant(activeSlug) &&
+        authStore.isAdminForTenant(activeSlug)
+      ) {
+        return { name: 'admin-orders' };
+      }
+      return true;
+    }
+
     if (!authStore.isAuthenticatedForTenant(tenantSlug)) {
       return true;
     }
