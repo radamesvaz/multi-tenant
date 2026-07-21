@@ -277,10 +277,9 @@ export const INVITATION_ERROR_CODES = {
 export type InvitationErrorCode =
   (typeof INVITATION_ERROR_CODES)[keyof typeof INVITATION_ERROR_CODES];
 
-/** POST /public/tenant-register */
+/** POST /public/tenant-register — slug is derived by the backend from `tenant_name`. */
 export type TenantRegisterRequestBody = {
   tenant_name: string;
-  tenant_slug: string;
   admin_name: string;
   email: string;
   phone?: string;
