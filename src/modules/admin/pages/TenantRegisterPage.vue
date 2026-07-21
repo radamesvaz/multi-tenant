@@ -18,7 +18,6 @@ const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
 
 const tenantName = ref('');
-const tenantSlug = ref('');
 const adminName = ref('');
 const email = ref('');
 const phone = ref('');
@@ -41,10 +40,6 @@ const passwordHints = [
   'Al menos un carácter especial',
 ];
 
-function normalizeSlug(value: string): string {
-  return value.trim().toLowerCase();
-}
-
 function tenantRegisterErrorMessage(err: TenantSignupApiError): string {
   const body = err.message.toLowerCase();
 
@@ -54,7 +49,7 @@ function tenantRegisterErrorMessage(err: TenantSignupApiError): string {
 
   if (err.status === 409) {
     if (body.includes('slug')) {
-      return 'Ese identificador de tienda ya está en uso. Probá otro slug.';
+      return 'Ya existe un negocio con un nombre similar. Probá con otro nombre.';
     }
     if (body.includes('email')) {
       return 'Ese email ya tiene cuenta en esta tienda.';
@@ -83,13 +78,6 @@ async function onSubmit() {
     return;
   }
 
-  const normalizedSlug = normalizeSlug(tenantSlug.value);
-  if (!normalizedSlug) {
-    errorMessage.value = 'El identificador de la tienda (slug) es obligatorio.';
-    return;
-  }
-  tenantSlug.value = normalizedSlug;
-
   const trimmedAdminName = adminName.value.trim();
   if (!trimmedAdminName) {
     errorMessage.value = 'El nombre del administrador es obligatorio.';
@@ -116,7 +104,6 @@ async function onSubmit() {
   const trimmedPhone = phone.value.trim();
   const payload = {
     tenant_name: trimmedTenantName,
-    tenant_slug: normalizedSlug,
     admin_name: trimmedAdminName,
     email: trimmedEmail,
     password: password.value,
@@ -187,20 +174,6 @@ async function onSubmit() {
             autocomplete="organization"
             required
             :disabled="isSubmitting"
-          />
-        </label>
-
-        <label class="admin-login__field">
-          <span>Identificador de la tienda (slug)</span>
-          <input
-            v-model="tenantSlug"
-            type="text"
-            name="tenant_slug"
-            autocomplete="off"
-            spellcheck="false"
-            required
-            :disabled="isSubmitting"
-            @blur="tenantSlug = normalizeSlug(tenantSlug)"
           />
         </label>
 
