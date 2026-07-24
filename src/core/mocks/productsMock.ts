@@ -9,7 +9,7 @@ export const mockProducts: Product[] = [
     name: 'Caja surtida de cupcakes',
     description: 'Caja de 12 cupcakes surtidos con buttercream de vainilla y chocolate.',
     price: 24.9,
-    available: true,
+    track_inventory: true,
     stock: 20,
     status: 'active',
     image_urls: [
@@ -26,7 +26,7 @@ export const mockProducts: Product[] = [
     name: 'Torta de chocolate',
     description: 'Torta húmeda de chocolate con ganache y decoraciones de granja.',
     price: 32.5,
-    available: true,
+    track_inventory: true,
     stock: 8,
     status: 'active',
     image_urls: [
@@ -42,7 +42,7 @@ export const mockProducts: Product[] = [
     name: 'Cookies decoradas',
     description: 'Docena de cookies decoradas a mano con glaseado de colores.',
     price: 18.0,
-    available: true,
+    track_inventory: true,
     stock: 50,
     status: 'active',
     image_urls: [
@@ -57,4 +57,3 @@ export const mockProducts: Product[] = [
 export const getMockProductById = (id: number): Product | undefined => {
   return mockProducts.find((p) => p.id_product === id);
 };
-

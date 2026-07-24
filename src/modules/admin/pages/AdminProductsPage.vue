@@ -7,6 +7,7 @@ import type {
 } from '../../../core/models';
 import { envConfig } from '../../../core/config/env';
 import { productThumbnailUploadHintEs } from '../../../core/constants/productThumbnailSpec';
+import { productImageUploadHintEs } from '../../../core/constants/productImageSpec';
 import { RouterLink } from 'vue-router';
 import { ProductSearchBar } from '../../../shared/components';
 import { useAdminProductsStore } from '../store';
@@ -24,8 +25,8 @@ const formDescription = ref('');
 const formPrice = ref('');
 const formStock = ref('');
 const formStatus = ref<ProductStatus>('active');
-const formAvailable = ref(true);
-const availabilityLockedByStatus = computed(() => formStatus.value !== 'active');
+const formTrackInventory = ref(true);
+const stockInputDisabled = computed(() => !formTrackInventory.value);
 
 const thumbnailFileInput = ref<HTMLInputElement | null>(null);
 /** Vista previa local de la imagen elegida (aún no guardada en el servidor). */
@@ -43,6 +44,7 @@ const modalSuccess = ref<string | null>(null);
 const selectedGalleryFiles = ref<File[]>([]);
 
 const thumbnailUploadHint = productThumbnailUploadHintEs();
+const galleryUploadHint = productImageUploadHintEs();
 
 const SEARCH_DEBOUNCE_MS = 400;
 const searchInput = ref('');
@@ -72,6 +74,10 @@ function resolveMediaUrl(url: string | null | undefined): string | null {
   return `${envConfig.apiBaseUrl}${u.startsWith('/') ? u : `/${u}`}`;
 }
 
+function productListThumbSrc(p: Product): string | null {
+  return resolveMediaUrl(p.thumbnail_url);
+}
+
 const thumbnailPreviewSrc = computed(() => {
   if (thumbnailLocalPreviewUrl.value) return thumbnailLocalPreviewUrl.value;
   return resolveMediaUrl(selectedProduct.value?.thumbnail_url ?? null);
@@ -89,6 +95,11 @@ function revokeThumbnailLocalPreview() {
 
 function triggerThumbnailFilePicker() {
   thumbnailFileInput.value?.click();
+}
+
+function onIncludeDeletedChange(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  void productsStore.setIncludeDeleted(checked);
 }
 
 let removeKeyListener: (() => void) | undefined;
@@ -116,20 +127,14 @@ watch(selectedProductId, (id) => {
   hydrateFormFromProduct(p);
 });
 
-watch(formStatus, (status) => {
-  if (status !== 'active') {
-    formAvailable.value = false;
-  }
-});
-
 function hydrateFormFromProduct(p: Product) {
   revokeThumbnailLocalPreview();
   formName.value = p.name;
   formDescription.value = p.description ?? '';
   formPrice.value = String(p.price);
-  formStock.value = p.stock == null ? '' : String(p.stock);
+  formStock.value = String(p.stock);
   formStatus.value = p.status;
-  formAvailable.value = p.available;
+  formTrackInventory.value = p.track_inventory;
   selectedGalleryFiles.value = [];
   if (galleryFileInput.value) galleryFileInput.value.value = '';
   if (thumbnailFileInput.value) thumbnailFileInput.value.value = '';
@@ -167,17 +172,50 @@ async function saveGeneralDetails() {
     // `v-model` on number inputs can bind numeric values; normalize with String() before trim.
     const priceStr = String(formPrice.value ?? '').trim();
     const stockStr = String(formStock.value ?? '').trim();
+    const description = formDescription.value.trim();
+    if (!description) {
+      setModalResultError(new Error('La descripción es obligatoria.'));
+      return;
+    }
     const payload: UpdateProductDetailsPayload = {
       name: formName.value.trim(),
-      description: formDescription.value.trim() ? formDescription.value.trim() : null,
+      description,
       price: Number(priceStr),
-      stock: stockStr === '' ? null : Number(stockStr),
+      stock: stockStr === '' ? 0 : Number(stockStr),
       status: formStatus.value,
-      available: formStatus.value === 'active' ? formAvailable.value : false,
+      track_inventory: formTrackInventory.value,
     };
     const refreshed = await productsStore.updateProductDetails(selectedProduct.value.id_product, payload);
+    if (refreshed.status === 'deleted' && !productsStore.includeDeleted) {
+      closeModal();
+      return;
+    }
     hydrateFormFromProduct(refreshed);
     setModalResultSuccess('Datos del producto actualizados.');
+  } catch (error) {
+    setModalResultError(error);
+  } finally {
+    isSavingDetails.value = false;
+  }
+}
+
+async function patchStatus(status: ProductStatus) {
+  if (!selectedProduct.value) return;
+  isSavingDetails.value = true;
+  try {
+    const id = selectedProduct.value.id_product;
+    const refreshed = await productsStore.setProductStatus(id, status);
+    const labels: Record<ProductStatus, string> = {
+      active: 'Producto publicado.',
+      inactive: 'Producto pausado (oculto en la tienda).',
+      deleted: 'Producto marcado como eliminado.',
+    };
+    if (status === 'deleted' && !productsStore.includeDeleted) {
+      closeModal();
+      return;
+    }
+    hydrateFormFromProduct(refreshed);
+    setModalResultSuccess(labels[status]);
   } catch (error) {
     setModalResultError(error);
   } finally {
@@ -274,6 +312,14 @@ async function removeGalleryImage(url: string) {
         placeholder="Al menos 2 letras (prefijo del nombre)"
         variant="admin"
       />
+      <label class="admin-products__deleted-toggle">
+        <input
+          type="checkbox"
+          :checked="productsStore.includeDeleted"
+          @change="onIncludeDeletedChange"
+        />
+        <span>Mostrar eliminados</span>
+      </label>
     </div>
 
     <div v-if="productsStore.isLoading && productsStore.products.length === 0" class="admin-products__state">
@@ -295,42 +341,55 @@ async function removeGalleryImage(url: string) {
         {{ productsStore.error }}
       </p>
       <div v-if="productsStore.products.length === 0" class="admin-products__state">
-        <p>No hay productos para este tenant.</p>
+        <p v-if="productsStore.includeDeleted">No hay productos para este tenant.</p>
+        <p v-else>No hay productos activos o pausados. Activá «Mostrar eliminados» para ver soft deletes.</p>
         <RouterLink :to="{ name: 'admin-product-new' }" class="admin-products__new-btn">
           Crear primer producto
         </RouterLink>
       </div>
 
-      <div v-else class="admin-products__table-wrap">
-      <table class="admin-products__table">
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Precio</th>
-            <th scope="col">Inventario</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Disponible</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="p in productsStore.products"
-            :key="p.id_product"
-            class="admin-products__row"
-            tabindex="0"
-            @click="openModal(p)"
-            @keydown.enter.prevent="openModal(p)"
-            @keydown.space.prevent="openModal(p)"
-          >
-            <td class="admin-products__name" data-label="Nombre">{{ p.name }}</td>
-            <td data-label="Precio">{{ formatPrice(p.price) }}</td>
-            <td data-label="Inventario">{{ p.stock ?? '—' }}</td>
-            <td data-label="Estado"><span class="admin-products__badge">{{ p.status }}</span></td>
-            <td data-label="Disponible">{{ p.available ? 'Sí' : 'No' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div v-else class="admin-products__list">
+        <article
+          v-for="p in productsStore.products"
+          :key="p.id_product"
+          class="admin-products__card"
+          tabindex="0"
+          role="button"
+          :aria-label="`Editar ${p.name}`"
+          @click="openModal(p)"
+          @keydown.enter.prevent="openModal(p)"
+          @keydown.space.prevent="openModal(p)"
+        >
+          <div class="admin-products__card-body">
+            <h2 class="admin-products__card-name">{{ p.name }}</h2>
+            <p v-if="p.description" class="admin-products__card-desc">{{ p.description }}</p>
+            <p class="admin-products__card-price">{{ formatPrice(p.price) }}</p>
+            <div class="admin-products__card-meta">
+              <span
+                class="admin-products__badge"
+                :class="{ 'admin-products__badge--deleted': p.status === 'deleted' }"
+              >{{ p.status }}</span>
+              <span class="admin-products__card-meta-item">
+                Inventario: {{ p.track_inventory ? p.stock : '∞' }}
+              </span>
+              <span class="admin-products__card-meta-item">
+                Limita stock: {{ p.track_inventory ? 'Sí' : 'No' }}
+              </span>
+            </div>
+          </div>
+          <div class="admin-products__card-media" aria-hidden="true">
+            <img
+              v-if="productListThumbSrc(p)"
+              :src="productListThumbSrc(p)!"
+              alt=""
+              class="admin-products__card-img"
+              loading="lazy"
+              decoding="async"
+            />
+            <span v-else class="admin-products__card-img-placeholder">Sin foto</span>
+          </div>
+        </article>
+      </div>
 
       <div v-if="productsStore.hasMore" class="admin-products__more">
         <button
@@ -380,39 +439,41 @@ async function removeGalleryImage(url: string) {
             </label>
             <label>
               Stock
-              <input v-model="formStock" type="number" min="0" class="admin-product-modal__input" />
+              <input
+                v-model="formStock"
+                type="number"
+                min="0"
+                class="admin-product-modal__input"
+                :disabled="stockInputDisabled"
+              />
             </label>
             <label>
               Estado
               <select v-model="formStatus" class="admin-product-modal__input">
                 <option value="active">active</option>
                 <option value="inactive">inactive</option>
-                <option value="archived">archived</option>
                 <option value="deleted">deleted</option>
               </select>
             </label>
-            <div
-              :class="[
-                'admin-product-modal__availability',
-                availabilityLockedByStatus ? 'admin-product-modal__availability--locked' : '',
-              ]"
-            >
-              <span class="admin-product-modal__availability-label">Disponible para compra</span>
+            <div class="admin-product-modal__availability">
+              <span class="admin-product-modal__availability-label">Limitar stock online</span>
               <label class="admin-product-modal__switch">
-                <input v-model="formAvailable" type="checkbox" :disabled="availabilityLockedByStatus" />
+                <input v-model="formTrackInventory" type="checkbox" />
                 <span class="admin-product-modal__switch-track" aria-hidden="true" />
               </label>
               <span
                 :class="[
                   'admin-product-modal__availability-value',
-                  formAvailable ? 'admin-product-modal__availability-value--on' : 'admin-product-modal__availability-value--off',
+                  formTrackInventory
+                    ? 'admin-product-modal__availability-value--on'
+                    : 'admin-product-modal__availability-value--off',
                 ]"
               >
-                {{ formAvailable ? 'Sí' : 'No' }}
+                {{ formTrackInventory ? 'Sí' : 'No' }}
               </span>
             </div>
-            <p v-if="availabilityLockedByStatus" class="admin-product-modal__availability-help">
-              Disponibilidad solo aplica cuando el estado es <code>active</code>.
+            <p v-if="!formTrackInventory" class="admin-product-modal__availability-help">
+              Con el límite desactivado, el stock no bloquea las ventas en la tienda.
             </p>
           </div>
           <label>
@@ -422,6 +483,32 @@ async function removeGalleryImage(url: string) {
           <div class="admin-product-modal__actions">
             <button type="button" class="admin-product-modal__btn" :disabled="isSavingDetails" @click="saveGeneralDetails">
               {{ isSavingDetails ? 'Guardando…' : 'Guardar datos' }}
+            </button>
+          </div>
+          <div class="admin-product-modal__actions admin-product-modal__actions--status">
+            <button
+              type="button"
+              class="admin-product-modal__btn admin-product-modal__btn--secondary"
+              :disabled="isSavingDetails || selectedProduct.status === 'active'"
+              @click="patchStatus('active')"
+            >
+              Publicar
+            </button>
+            <button
+              type="button"
+              class="admin-product-modal__btn admin-product-modal__btn--secondary"
+              :disabled="isSavingDetails || selectedProduct.status === 'inactive'"
+              @click="patchStatus('inactive')"
+            >
+              Pausar
+            </button>
+            <button
+              type="button"
+              class="admin-product-modal__btn admin-product-modal__btn--secondary"
+              :disabled="isSavingDetails || selectedProduct.status === 'deleted'"
+              @click="patchStatus('deleted')"
+            >
+              Eliminar
             </button>
           </div>
         </section>
@@ -473,6 +560,7 @@ async function removeGalleryImage(url: string) {
 
         <section class="admin-product-modal__section">
           <h3 class="admin-product-modal__section-title">Galería</h3>
+          <p class="admin-product-modal__hint">{{ galleryUploadHint }}</p>
           <div class="admin-product-modal__inline">
             <input
               ref="galleryFileInput"

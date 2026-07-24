@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Product } from '../../../core/models';
+import { isPurchasable, isSoldOut } from '../../../core/utils';
 import { BaseButton } from '../../../shared/components';
 import './ProductCard.css';
 
@@ -16,11 +18,20 @@ const emit = defineEmits<{
   decrement: [product: Product];
 }>();
 
+const soldOut = computed(() => isSoldOut(props.product));
+const canPurchase = computed(() => isPurchasable(props.product));
+const canIncrement = computed(() => {
+  if (!canPurchase.value) return false;
+  if (!props.product.track_inventory) return true;
+  return props.quantity < props.product.stock;
+});
+
 const handleClick = () => {
   emit('open', props.product);
 };
 
 const increment = () => {
+  if (!canIncrement.value) return;
   emit('increment', props.product);
 };
 
@@ -38,8 +49,8 @@ const decrement = () => {
         :alt="product.name"
         class="product-card__image"
       />
-      <div v-if="!product.available" class="product-card__unavailable">
-        No disponible
+      <div v-if="soldOut" class="product-card__unavailable">
+        Agotado
       </div>
     </div>
     <div class="product-card__body">
@@ -58,7 +69,7 @@ const decrement = () => {
           unstyled
           type="button"
           class="qty-btn"
-          :disabled="!product.available"
+          :disabled="!canPurchase"
           @click="decrement"
         >
           -1
@@ -68,7 +79,7 @@ const decrement = () => {
           unstyled
           type="button"
           class="qty-btn"
-          :disabled="!product.available"
+          :disabled="!canIncrement"
           @click="increment"
         >
           +1

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { SubscriptionCanceledError } from '../../../core/auth/subscriptionApi';
 import type { CreateProductPayload, CreateProductStatus } from '../../../core/models';
-import { productThumbnailUploadHintEs } from '../../../core/constants/productThumbnailSpec';
+import { productImageUploadHintEs } from '../../../core/constants/productImageSpec';
 import { AppSnackbar } from '../../../shared/components';
 import { useAdminProductsStore } from '../store';
 import './AdminProductFormPage.css';
@@ -23,7 +23,7 @@ const formDescription = ref('');
 const formPrice = ref('');
 const formStock = ref('');
 const formStatus = ref<CreateProductStatus>('active');
-const formAvailable = ref(true);
+const formTrackInventory = ref(true);
 
 const createdProductId = ref<number | null>(null);
 const createdProductName = ref('');
@@ -38,15 +38,9 @@ const fieldErrors = ref<Record<string, string>>({});
 const snackbarOpen = ref(false);
 const snackbarMessage = ref('');
 
-const thumbnailUploadHint = productThumbnailUploadHintEs();
+const galleryUploadHint = productImageUploadHintEs();
 const isCreated = computed(() => createdProductId.value != null);
-const availabilityLockedByStatus = computed(() => formStatus.value !== 'active');
-
-watch(formStatus, (status) => {
-  if (status !== 'active') {
-    formAvailable.value = false;
-  }
-});
+const stockInputDisabled = computed(() => !formTrackInventory.value);
 
 function showSnackbar(message: string) {
   snackbarMessage.value = message;
@@ -74,8 +68,8 @@ function validateCreateForm(): CreateProductPayload | null {
   if (!description) {
     errors.description = 'La descripción es obligatoria.';
   }
-  if (!priceStr || Number.isNaN(price) || price <= 0) {
-    errors.price = 'El precio debe ser mayor que 0.';
+  if (!priceStr || Number.isNaN(price) || price < 0) {
+    errors.price = 'El precio debe ser mayor o igual a 0.';
   }
   if (stockStr !== '') {
     const stock = Number(stockStr);
@@ -93,7 +87,7 @@ function validateCreateForm(): CreateProductPayload | null {
     name,
     description,
     price,
-    available: formStatus.value === 'active' ? formAvailable.value : false,
+    track_inventory: formTrackInventory.value,
     stock: stockStr === '' ? 0 : Number(stockStr),
     status: formStatus.value,
   };
@@ -230,6 +224,7 @@ onUnmounted(() => {
               min="0"
               step="1"
               placeholder="0"
+              :disabled="stockInputDisabled"
               :aria-invalid="fieldErrors.stock ? 'true' : undefined"
             />
             <span v-if="fieldErrors.stock" class="admin-product-form__field-error" role="alert">
@@ -246,30 +241,21 @@ onUnmounted(() => {
             </select>
           </label>
 
-          <div
-            :class="[
-              'admin-product-form__availability',
-              availabilityLockedByStatus ? 'admin-product-form__availability--locked' : '',
-            ]"
-          >
-            <span class="admin-product-form__availability-label">Disponible para compra</span>
+          <div class="admin-product-form__availability">
+            <span class="admin-product-form__availability-label">Limitar stock online</span>
             <label class="admin-product-form__switch">
-              <input
-                v-model="formAvailable"
-                type="checkbox"
-                :disabled="availabilityLockedByStatus"
-              />
+              <input v-model="formTrackInventory" type="checkbox" />
               <span class="admin-product-form__switch-track" aria-hidden="true" />
             </label>
             <span
               :class="[
                 'admin-product-form__availability-value',
-                formAvailable
+                formTrackInventory
                   ? 'admin-product-form__availability-value--on'
                   : 'admin-product-form__availability-value--off',
               ]"
             >
-              {{ formAvailable ? 'Sí' : 'No' }}
+              {{ formTrackInventory ? 'Sí' : 'No' }}
             </span>
           </div>
         </div>
@@ -311,7 +297,7 @@ onUnmounted(() => {
         Producto creado con ID <strong>{{ createdProductId }}</strong>. Podés subir una o más
         imágenes ahora o hacerlo más tarde desde el listado.
       </p>
-      <p class="admin-product-form__images-hint">{{ thumbnailUploadHint }}</p>
+      <p class="admin-product-form__images-hint">{{ galleryUploadHint }}</p>
 
       <label class="admin-product-form__field admin-product-form__field--full">
         <span>Archivos de imagen</span>

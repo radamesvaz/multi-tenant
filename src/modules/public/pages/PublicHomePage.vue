@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
 import type { Product } from '../../../core/models';
+import { isPurchasable, remainingPurchasableQuantity } from '../../../core/utils';
 import { usePublicProductsStore } from '../store/products';
 import { useCartStore } from '../store/cart';
 import { BaseButton, BaseLink, ProductSearchBar } from '../../../shared/components';
@@ -69,6 +70,13 @@ const decrementProduct = (product: Product) => {
   const current = getProductQuantity(product.id_product);
   cartStore.updateQuantity(product.id_product, current - 1);
 };
+
+const canIncrementSelected = computed(() => {
+  const product = selectedProduct.value;
+  if (!product || !isPurchasable(product)) return false;
+  const qty = getProductQuantity(product.id_product);
+  return remainingPurchasableQuantity(product, qty) > 0;
+});
 
 const checkoutRoute = computed(() => `/t/${tenantSlug.value}/checkout`);
 
@@ -182,6 +190,7 @@ const cartItemsLabel = computed(() => (cartStore.itemCount === 1 ? 'producto' : 
             unstyled
             type="button"
             class="qty-btn"
+            :disabled="!canIncrementSelected"
             @click="incrementProduct(selectedProduct)"
           >
             +1

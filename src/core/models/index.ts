@@ -1,4 +1,4 @@
-﻿export type ProductStatus = 'active' | 'inactive' | 'archived' | 'deleted';
+﻿export type ProductStatus = 'active' | 'inactive' | 'deleted';
 
 export type Product = {
   id_product: number;
@@ -6,8 +6,8 @@ export type Product = {
   name: string;
   description: string | null;
   price: number;
-  available: boolean;
-  stock: number | null;
+  track_inventory: boolean;
+  stock: number;
   status: ProductStatus;
   image_urls: string[];
   thumbnail_url: string | null;
@@ -23,27 +23,31 @@ export type ProductListResponse = {
 /** Body for `PUT /auth/products/{id}` — only general fields; thumbnail and images are handled by their dedicated endpoints. */
 export type UpdateProductDetailsPayload = {
   name: string;
-  description: string | null;
+  description: string;
   price: number;
-  stock: number | null;
-  status: ProductStatus;
-  available: boolean;
+  stock: number;
+  /** Omit to keep the current server value. */
+  track_inventory?: boolean;
+  /** Omit to keep the current server value. */
+  status?: ProductStatus;
 };
 
-/** Values accepted by `POST /auth/products` for `status` (MVP). */
-export type CreateProductStatus = 'active' | 'inactive' | 'deleted';
+/** @deprecated Use `ProductStatus` — create accepts the same union. */
+export type CreateProductStatus = ProductStatus;
 
 /** Body for `POST /auth/products` — JSON only; images via separate endpoints. */
 export type CreateProductPayload = {
   name: string;
   description: string;
   price: number;
-  available: boolean;
-  stock: number;
-  status: CreateProductStatus;
+  stock?: number;
+  /** Omit or null on server → `true`. */
+  track_inventory?: boolean;
+  /** Omit → `"active"`. */
+  status?: ProductStatus;
 };
 
-/** `POST /auth/products` — 200 response. */
+/** `POST /auth/products` — 201 Created response. */
 export type CreateProductResponse = {
   message: string;
   product_id: number;

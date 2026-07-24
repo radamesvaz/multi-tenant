@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
+import { remainingPurchasableQuantity } from '../../../core/utils';
 import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useCartStore } from '../store/cart';
@@ -27,10 +28,16 @@ const getItemSubtotal = (price: number, quantity: number) =>
     maximumFractionDigits: 2,
   });
 
+const canIncrement = (productId: number) => {
+  const current = cartStore.items.find((item) => item.product.id_product === productId);
+  if (!current) return false;
+  return remainingPurchasableQuantity(current.product, current.quantity) > 0;
+};
+
 const increment = (productId: number) => {
   const current = cartStore.items.find((item) => item.product.id_product === productId);
   if (!current) return;
-  cartStore.updateQuantity(productId, current.quantity + 1);
+  cartStore.addItem(current.product, 1);
 };
 
 const decrement = (productId: number) => {
@@ -80,6 +87,7 @@ const decrement = (productId: number) => {
               unstyled
               type="button"
               class="qty-btn"
+              :disabled="!canIncrement(item.product.id_product)"
               @click="increment(item.product.id_product)"
             >
               +1

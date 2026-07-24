@@ -17,6 +17,8 @@ type AdminProductsState = {
   error: string | null;
   nextCursor: string | null;
   listQuery: string;
+  /** When false (default), soft-deleted products are excluded from the admin list. */
+  includeDeleted: boolean;
 };
 
 let listSessionAbort: AbortController | null = null;
@@ -36,6 +38,12 @@ function isAbortError(e: unknown): boolean {
   return e instanceof DOMException && e.name === 'AbortError';
 }
 
+/** Defensive FE filter if the API still returns deleted rows when include_deleted=false. */
+function applyDeletedVisibility(items: Product[], includeDeleted: boolean): Product[] {
+  if (includeDeleted) return items;
+  return items.filter((p) => p.status !== 'deleted');
+}
+
 export const useAdminProductsStore = defineStore('admin-products', {
   state: (): AdminProductsState => ({
     products: [],
@@ -44,6 +52,7 @@ export const useAdminProductsStore = defineStore('admin-products', {
     error: null,
     nextCursor: null,
     listQuery: '',
+    includeDeleted: false,
   }),
   getters: {
     hasMore(state): boolean {
@@ -62,9 +71,20 @@ export const useAdminProductsStore = defineStore('admin-products', {
     },
 
     async refreshProductById(id: number) {
-      const { tenantSlug, token } = this.getAuthContext();
-      const refreshed = await productService.getTenantProductById(tenantSlug, id, { token });
-      this.products = this.products.map((p) => (p.id_product === id ? refreshed : p));
+      const { token } = this.getAuthContext();
+      const refreshed = await productService.getAuthProductById(token, id);
+      if (!this.includeDeleted && refreshed.status === 'deleted') {
+        this.products = this.products.filter((p) => p.id_product !== id);
+        return refreshed;
+      }
+      const idx = this.products.findIndex((p) => p.id_product === id);
+      if (idx === -1) {
+        if (this.includeDeleted || refreshed.status !== 'deleted') {
+          this.products = [refreshed, ...this.products];
+        }
+      } else {
+        this.products = this.products.map((p) => (p.id_product === id ? refreshed : p));
+      }
       return refreshed;
     },
 
@@ -74,18 +94,18 @@ export const useAdminProductsStore = defineStore('admin-products', {
       this.error = null;
 
       try {
-        const { tenantSlug, token } = this.getAuthContext();
+        const { token } = this.getAuthContext();
         const q = effectiveQ(searchInput);
         this.listQuery = q;
         const signal = newListSessionSignal();
 
-        const { items, next_cursor } = await productService.listTenantProducts(tenantSlug, {
-          token,
+        const { items, next_cursor } = await productService.listAuthProducts(token, {
           limit: ADMIN_PRODUCT_PAGE_SIZE,
           q: q || undefined,
+          includeDeleted: this.includeDeleted,
           signal,
         });
-        this.products = items;
+        this.products = applyDeletedVisibility(items, this.includeDeleted);
         this.nextCursor = next_cursor;
       } catch (error) {
         if (isAbortError(error)) return;
@@ -108,15 +128,18 @@ export const useAdminProductsStore = defineStore('admin-products', {
       this.error = null;
 
       try {
-        const { tenantSlug, token } = this.getAuthContext();
-        const { items, next_cursor } = await productService.listTenantProducts(tenantSlug, {
-          token,
+        const { token } = this.getAuthContext();
+        const { items, next_cursor } = await productService.listAuthProducts(token, {
           limit: ADMIN_PRODUCT_PAGE_SIZE,
           cursor: this.nextCursor,
           q: this.listQuery || undefined,
+          includeDeleted: this.includeDeleted,
           signal,
         });
-        this.products = [...this.products, ...items];
+        this.products = [
+          ...this.products,
+          ...applyDeletedVisibility(items, this.includeDeleted),
+        ];
         this.nextCursor = next_cursor;
       } catch (error) {
         if (isAbortError(error)) return;
@@ -125,6 +148,12 @@ export const useAdminProductsStore = defineStore('admin-products', {
       } finally {
         this.isLoadingMore = false;
       }
+    },
+
+    async setIncludeDeleted(includeDeleted: boolean) {
+      if (this.includeDeleted === includeDeleted) return;
+      this.includeDeleted = includeDeleted;
+      await this.loadFirstPage(this.listQuery);
     },
 
     /** @deprecated Use `loadFirstPage` */
@@ -172,6 +201,19 @@ export const useAdminProductsStore = defineStore('admin-products', {
       try {
         const { token } = this.getAuthContext();
         await productService.updateAuthProductDetails(token, id, payload);
+        return this.refreshProductById(id);
+      } catch (error) {
+        const code = (error as Error & { code?: string }).code;
+        this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
+        throw error;
+      }
+    },
+
+    async setProductStatus(id: number, status: Product['status']) {
+      this.error = null;
+      try {
+        const { token } = this.getAuthContext();
+        await productService.patchAuthProductStatus(token, id, status);
         return this.refreshProductById(id);
       } catch (error) {
         const code = (error as Error & { code?: string }).code;

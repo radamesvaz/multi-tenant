@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { Product } from '../../../core/models';
+import { remainingPurchasableQuantity } from '../../../core/utils';
 
 export type CartItem = {
   product: Product;
@@ -19,7 +20,7 @@ type CartState = {
   isHydrated: boolean;
 };
 
-const CART_SCHEMA_VERSION = 1;
+const CART_SCHEMA_VERSION = 2;
 
 function getStorageKey(tenantSlug: string): string {
   return `cart:${tenantSlug}`;
@@ -99,11 +100,21 @@ export const useCartStore = defineStore('cart', {
       this.updatedAt = new Date().toISOString();
     },
     addItem(product: Product, quantity = 1) {
+      if (quantity <= 0) return;
+
       const existing = this.items.find((item) => item.product.id_product === product.id_product);
+      const currentQty = existing?.quantity ?? 0;
+      const room = remainingPurchasableQuantity(product, currentQty);
+      if (room <= 0) return;
+
+      const toAdd = Number.isFinite(room) ? Math.min(quantity, room) : quantity;
+      if (toAdd <= 0) return;
+
       if (existing) {
-        existing.quantity += quantity;
+        existing.quantity += toAdd;
+        existing.product = product;
       } else {
-        this.items.push({ product, quantity });
+        this.items.push({ product, quantity: toAdd });
       }
       this.touchUpdatedAt();
       this.persistToStorage();
@@ -114,11 +125,21 @@ export const useCartStore = defineStore('cart', {
 
       if (quantity <= 0) {
         this.removeItem(productId);
-      } else {
-        existing.quantity = quantity;
-        this.touchUpdatedAt();
-        this.persistToStorage();
+        return;
       }
+
+      const roomFromZero = remainingPurchasableQuantity(existing.product, 0);
+      const next = Number.isFinite(roomFromZero)
+        ? Math.min(quantity, roomFromZero)
+        : quantity;
+      if (next <= 0) {
+        this.removeItem(productId);
+        return;
+      }
+
+      existing.quantity = next;
+      this.touchUpdatedAt();
+      this.persistToStorage();
     },
     removeItem(productId: number) {
       this.items = this.items.filter((item) => item.product.id_product !== productId);
@@ -137,4 +158,3 @@ export const useCartStore = defineStore('cart', {
     },
   },
 });
-

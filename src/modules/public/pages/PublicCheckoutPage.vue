@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { envConfig } from '../../../core/config';
 import { orderService, productService } from '../../../core/services';
 import type { CreateOrderPayload } from '../../../core/models';
+import { isPurchasable, isSoldOut } from '../../../core/utils';
 import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useNotification } from '../../../shared/composables/useNotification';
@@ -140,16 +141,16 @@ const validateCartWithCatalog = async () => {
         return item;
       }
 
-      if (!fromCatalog.available || (fromCatalog.stock ?? 1) <= 0) {
+      if (!isPurchasable(fromCatalog)) {
         issues.push({
           productId: item.product.id_product,
           productName: fromCatalog.name,
           type: 'UNAVAILABLE',
-          message: 'Producto sin disponibilidad actual.',
+          message: isSoldOut(fromCatalog)
+            ? 'Producto agotado.'
+            : 'Producto sin disponibilidad actual.',
         });
-      }
-
-      if (fromCatalog.stock !== null && item.quantity > fromCatalog.stock) {
+      } else if (fromCatalog.track_inventory && item.quantity > fromCatalog.stock) {
         issues.push({
           productId: item.product.id_product,
           productName: fromCatalog.name,
@@ -288,7 +289,25 @@ const submitOrder = async () => {
     openWhatsApp(buildWhatsAppMessage());
     cartStore.clearCart();
   } catch (error) {
-    notifyError('Error al crear la orden. Por favor intenta de nuevo.');
+    const status = (error as Error & { status?: number }).status;
+    const message = (error as Error).message?.toLowerCase?.() ?? '';
+
+    if (status === 404) {
+      notifyError('Este producto ya no está disponible.');
+      void validateCartWithCatalog();
+    } else if (status === 409) {
+      if (message.includes('not enough') || message.includes('stock')) {
+        notifyError('No hay stock suficiente para uno o más productos.');
+      } else {
+        notifyError('Uno o más productos no están disponibles para compra.');
+      }
+      void validateCartWithCatalog();
+    } else if (status === 400 && message.includes('tenant')) {
+      notifyError('No se pudo resolver la tienda. Recarga la página e intenta de nuevo.');
+    } else {
+      notifyError('Error al crear la orden. Por favor intenta de nuevo.');
+    }
+
     if (envConfig.enableDebug) {
       console.error(error);
     }
