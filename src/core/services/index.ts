@@ -275,12 +275,16 @@ function parseTenantBrandingFields(raw: unknown): TenantBranding {
   };
 }
 
-const PRODUCT_STATUSES: ProductStatus[] = ['active', 'inactive', 'archived', 'deleted'];
+const PRODUCT_STATUSES: ProductStatus[] = ['active', 'inactive', 'deleted'];
 
 function normalizeProductStatus(raw: unknown): ProductStatus {
   const s = String(raw ?? '').trim();
   if (PRODUCT_STATUSES.includes(s as ProductStatus)) {
     return s as ProductStatus;
+  }
+  // Legacy backend value — treat as paused (hidden from storefront).
+  if (s === 'archived') {
+    return 'inactive';
   }
   return 'active';
 }
@@ -306,10 +310,14 @@ export function parseApiProduct(raw: unknown): Product {
   const stockRaw = r.stock;
   const stock =
     stockRaw == null || stockRaw === ''
-      ? null
+      ? 0
       : Number.isFinite(Number(stockRaw))
         ? Number(stockRaw)
-        : null;
+        : 0;
+
+  // Default ON when field is missing (matches server create default).
+  const trackRaw = r.track_inventory;
+  const track_inventory = trackRaw == null ? true : Boolean(trackRaw);
 
   return {
     id_product: Number(r.id_product),
@@ -317,7 +325,7 @@ export function parseApiProduct(raw: unknown): Product {
     name: typeof r.name === 'string' ? r.name : '',
     description: desc,
     price: Number(r.price),
-    available: Boolean(r.available),
+    track_inventory,
     stock,
     status: normalizeProductStatus(r.status),
     image_urls,
@@ -357,6 +365,8 @@ function buildTenantProductsQuery(params: {
   limit?: number;
   cursor?: string | null;
   q?: string;
+  /** Admin list only: when false/omitted, backend should exclude soft-deleted products. */
+  includeDeleted?: boolean;
 }): string {
   const search = new URLSearchParams();
   const limit = params.limit ?? DEFAULT_PRODUCT_PAGE_SIZE;
@@ -371,8 +381,22 @@ function buildTenantProductsQuery(params: {
   if (qt.length >= 2) {
     search.set('q', qt);
   }
+  if (params.includeDeleted === true) {
+    search.set('include_deleted', 'true');
+  } else if (params.includeDeleted === false) {
+    search.set('include_deleted', 'false');
+  }
   return `?${search.toString()}`;
 }
+
+export type AuthProductListOptions = {
+  limit?: number;
+  cursor?: string | null;
+  q?: string;
+  /** When true, include soft-deleted products. Default false for admin catalog. */
+  includeDeleted?: boolean;
+  signal?: AbortSignal;
+};
 
 export const authService = {
   /**
@@ -472,7 +496,7 @@ export const tenantService = {
 
 export const productService = {
   /**
-   * `GET /t/{tenant_slug}/products` — paginated envelope (`items`, `next_cursor`). Optional JWT for admin.
+   * `GET /t/{tenant_slug}/products` — public catalog (active only). Paginated envelope.
    */
   async listTenantProducts(
     tenantSlug: string,
@@ -488,6 +512,32 @@ export const productService = {
     const raw = await httpRequest<unknown>(path, {
       method: 'GET',
       token: options.token ?? null,
+      signal: options.signal,
+    });
+    return parseProductListResponse(raw);
+  },
+
+  /**
+   * `GET /auth/products` — admin catalog. Requires admin/superadmin JWT.
+   * Pass `includeDeleted: true` to include soft-deleted rows (`include_deleted=true`).
+   * Default omits deleted (`include_deleted=false`).
+   */
+  async listAuthProducts(
+    token: string,
+    options: AuthProductListOptions = {},
+  ): Promise<ProductListResponse> {
+    const includeDeleted = options.includeDeleted === true;
+    const path =
+      '/auth/products' +
+      buildTenantProductsQuery({
+        limit: options.limit,
+        cursor: options.cursor,
+        q: options.q,
+        includeDeleted,
+      });
+    const raw = await httpRequest<unknown>(path, {
+      method: 'GET',
+      token,
       signal: options.signal,
     });
     return parseProductListResponse(raw);
@@ -537,7 +587,21 @@ export const productService = {
     return this.getTenantProductById(tenantSlug, id, options);
   },
 
-  /** `POST /auth/products` — create product (JSON only; images via dedicated endpoints). */
+  /** `GET /auth/products/{id}` — admin get regardless of status. */
+  async getAuthProductById(
+    token: string,
+    id: number,
+    options: { signal?: AbortSignal } = {},
+  ) {
+    const raw = await httpRequest<unknown>(`/auth/products/${id}`, {
+      method: 'GET',
+      token,
+      signal: options.signal,
+    });
+    return parseApiProduct(raw);
+  },
+
+  /** `POST /auth/products` — create product (JSON only; images via dedicated endpoints). Success: 201. */
   async createAuthProduct(token: string, payload: CreateProductPayload) {
     return httpRequest<CreateProductResponse>('/auth/products', {
       method: 'POST',
@@ -551,6 +615,15 @@ export const productService = {
       method: 'PUT',
       token,
       body: payload,
+    });
+  },
+
+  /** `PATCH /auth/products/{id}` — soft delete / pause / restore via status only. */
+  async patchAuthProductStatus(token: string, id: number, status: ProductStatus) {
+    return httpRequest<{ message: string }>(`/auth/products/${id}`, {
+      method: 'PATCH',
+      token,
+      body: { status },
     });
   },
 
