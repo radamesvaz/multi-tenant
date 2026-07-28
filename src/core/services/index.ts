@@ -22,6 +22,7 @@ import type {
   ResetPasswordResponse,
   SubscriptionResponse,
   CreateOrderPayload,
+  CreateOrderResponse,
   CreateProductPayload,
   CreateProductResponse,
   Order,
@@ -708,12 +709,15 @@ export const orderService = {
     return this.getAuthOrderById(token, id);
   },
 
+  /**
+   * `POST /t/{tenant_slug}/orders` — public storefront create.
+   * Success: 201 `{ message, id_order }`.
+   */
   async createPublicOrder(tenantSlug: string, payload: CreateOrderPayload) {
-    const raw = await httpRequest<unknown>(tenantOrdersCreatePath(tenantSlug), {
+    return httpRequest<CreateOrderResponse>(tenantOrdersCreatePath(tenantSlug), {
       method: 'POST',
       body: payload,
     });
-    return parseOrder(raw);
   },
 };
 

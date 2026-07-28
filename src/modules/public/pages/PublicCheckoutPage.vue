@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { envConfig } from '../../../core/config';
+import { isSubscriptionCanceledResponse } from '../../../core/auth/subscriptionApi';
+import { PUBLIC_STORE_UNAVAILABLE_MESSAGE } from '../../../core/auth/publicBrandingApi';
 import { orderService, productService } from '../../../core/services';
 import type { CreateOrderPayload } from '../../../core/models';
 import { isPurchasable, isSoldOut } from '../../../core/utils';
@@ -31,7 +33,8 @@ const form = ref({
   email: '',
   phonePrefix: '',
   phone: '',
-  deliveryAddress: '',
+  deliveryDirection: '',
+  deliveryDate: '',
   note: '',
 });
 
@@ -41,8 +44,58 @@ const isValidatingCatalog = ref(false);
 const validationIssues = ref<ValidationIssue[]>([]);
 const showWhatsAppWebHelper = ref(false);
 const whatsappMessage = ref('');
+const whatsappWebUrl = ref('');
+/** When false, submit uses today; date picker only shown if true. */
+const scheduleForLater = ref(false);
 
 const homeRoute = computed(() => `/t/${tenantSlug.value}`);
+
+const toLocalIsoDate = (date: Date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/** Local calendar today as `YYYY-MM-DD`. */
+const todayIsoDate = computed(() => toLocalIsoDate(new Date()));
+
+/** Min for “otro día” picker: tomorrow (no max). */
+const minScheduledDeliveryDate = computed(() => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return toLocalIsoDate(tomorrow);
+});
+
+const effectiveDeliveryDate = computed(() =>
+  scheduleForLater.value ? form.value.deliveryDate.trim() : todayIsoDate.value
+);
+
+const todayDeliveryLabel = computed(() =>
+  new Date().toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+);
+
+const openScheduleForLater = () => {
+  scheduleForLater.value = true;
+  if (!form.value.deliveryDate || form.value.deliveryDate < minScheduledDeliveryDate.value) {
+    form.value.deliveryDate = minScheduledDeliveryDate.value;
+  }
+  const next = { ...errors.value };
+  delete next.deliveryDate;
+  errors.value = next;
+};
+
+const useDeliveryToday = () => {
+  scheduleForLater.value = false;
+  form.value.deliveryDate = '';
+  const next = { ...errors.value };
+  delete next.deliveryDate;
+  errors.value = next;
+};
 
 const hasBlockingConflicts = computed(() =>
   validationIssues.value.some((issue) =>
@@ -99,6 +152,8 @@ const validateForm = () => {
   const trimmedEmail = form.value.email.trim();
   const trimmedPhone = form.value.phone.trim();
   const numericPhone = trimmedPhone.replace(/\D/g, '');
+  const trimmedDirection = form.value.deliveryDirection.trim();
+  const deliveryDate = form.value.deliveryDate.trim();
 
   if (trimmedName.length < 2) {
     nextErrors.name = 'Por favor ingresa tu nombre completo';
@@ -111,6 +166,16 @@ const validateForm = () => {
   }
   if (numericPhone.length < 7) {
     nextErrors.phone = 'Por favor ingresa el número de teléfono';
+  }
+  if (!trimmedDirection) {
+    nextErrors.deliveryDirection = 'Por favor ingresa la dirección de entrega';
+  }
+  if (scheduleForLater.value) {
+    if (!deliveryDate) {
+      nextErrors.deliveryDate = 'Por favor selecciona la fecha de entrega';
+    } else if (deliveryDate < minScheduledDeliveryDate.value) {
+      nextErrors.deliveryDate = 'La fecha programada debe ser a partir de mañana';
+    }
   }
   errors.value = nextErrors;
   return Object.keys(nextErrors).length === 0;
@@ -183,9 +248,11 @@ const validateCartWithCatalog = async () => {
   }
 };
 
-const buildWhatsAppMessage = () => {
+const buildWhatsAppMessage = (orderId: number) => {
   const lines: string[] = [];
   lines.push('Hola, quiero confirmar este pedido:');
+  lines.push('');
+  lines.push(`Pedido #${orderId}`);
   lines.push('');
   lines.push('Productos:');
   cartStore.items.forEach((item) => {
@@ -198,9 +265,8 @@ const buildWhatsAppMessage = () => {
   lines.push(`Nombre: ${form.value.name.trim()}`);
   lines.push(`Teléfono: ${form.value.phonePrefix}${form.value.phone.replace(/\D/g, '')}`);
   lines.push(`Email: ${form.value.email.trim()}`);
-  if (form.value.deliveryAddress.trim()) {
-    lines.push(`Dirección: ${form.value.deliveryAddress.trim()}`);
-  }
+  lines.push(`Dirección: ${form.value.deliveryDirection.trim()}`);
+  lines.push(`Fecha de entrega: ${effectiveDeliveryDate.value}`);
   if (form.value.note.trim()) {
     lines.push(`Nota: ${form.value.note.trim()}`);
   }
@@ -223,30 +289,68 @@ const openGoogleMaps = () => {
   window.open('https://maps.google.com', '_blank', 'noopener,noreferrer');
 };
 
-const openWhatsApp = (message: string) => {
+const isMobileUserAgent = () =>
+  /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const buildWhatsAppWebUrl = (message: string) => {
+  const sanitizedPhone = envConfig.whatsapp.phoneNumber.replace(/\D/g, '');
+  if (!sanitizedPhone) return null;
+  const encodedText = encodeURIComponent(message);
+  return {
+    sanitizedPhone,
+    encodedText,
+    webUrl: `https://api.whatsapp.com/send?phone=${sanitizedPhone}&text=${encodedText}`,
+  };
+};
+
+/** Open blank tab on the submit click (user gesture) so desktop is not blocked after await. */
+const prepareDesktopWhatsAppTab = (): Window | null => {
+  if (isMobileUserAgent()) return null;
+  if (!envConfig.whatsapp.enabled) return null;
+  if (!envConfig.whatsapp.phoneNumber.replace(/\D/g, '')) return null;
+  return window.open('about:blank', '_blank');
+};
+
+const openWhatsAppInNewTab = () => {
+  if (!whatsappWebUrl.value) return;
+  window.open(whatsappWebUrl.value, '_blank', 'noopener,noreferrer');
+};
+
+const openWhatsApp = (message: string, preparedTab: Window | null = null) => {
   if (!envConfig.whatsapp.enabled) {
+    preparedTab?.close();
     notifyError('Integración con WhatsApp deshabilitada');
     return;
   }
 
-  const sanitizedPhone = envConfig.whatsapp.phoneNumber.replace(/\D/g, '');
-  if (!sanitizedPhone) {
+  const built = buildWhatsAppWebUrl(message);
+  if (!built) {
+    preparedTab?.close();
     notifyError('No hay número de WhatsApp configurado');
     return;
   }
 
-  const encodedText = encodeURIComponent(message);
-  const webUrl = `https://api.whatsapp.com/send?phone=${sanitizedPhone}&text=${encodedText}`;
-  const isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const { sanitizedPhone, encodedText, webUrl } = built;
+  const isMobile = isMobileUserAgent();
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+  whatsappMessage.value = message;
+  whatsappWebUrl.value = webUrl;
   notifySuccess('Abriendo WhatsApp para coordinar el pedido...');
 
   if (!isMobile) {
-    whatsappMessage.value = message;
-    showWhatsAppWebHelper.value = true;
+    if (preparedTab && !preparedTab.closed) {
+      preparedTab.location.href = webUrl;
+      return;
+    }
+    const opened = window.open(webUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      showWhatsAppWebHelper.value = true;
+    }
     return;
   }
+
+  preparedTab?.close();
 
   if (isIOS) {
     const deepLink = `whatsapp://send?phone=${sanitizedPhone}&text=${encodedText}`;
@@ -269,14 +373,15 @@ const submitOrder = async () => {
     return;
   }
 
+  const preparedWhatsAppTab = prepareDesktopWhatsAppTab();
   isSubmitting.value = true;
   try {
     const payload: CreateOrderPayload = {
       name: form.value.name.trim(),
       email: form.value.email.trim(),
       phone: `${form.value.phonePrefix}${form.value.phone.replace(/\D/g, '')}`,
-      delivery_address: form.value.deliveryAddress.trim() || null,
-      delivery_date: null,
+      delivery_direction: form.value.deliveryDirection.trim(),
+      delivery_date: effectiveDeliveryDate.value,
       note: form.value.note.trim() || '',
       items: cartStore.items.map((item) => ({
         id_product: item.product.id_product,
@@ -284,25 +389,43 @@ const submitOrder = async () => {
       })),
     };
 
-    await orderService.createPublicOrder(tenantSlug.value, payload);
-    notifySuccess(`¡Orden creada exitosamente! Total: ${formattedTotal.value} €`);
-    openWhatsApp(buildWhatsAppMessage());
+    const created = await orderService.createPublicOrder(tenantSlug.value, payload);
+    notifySuccess(
+      `¡Pedido #${created.id_order} creado exitosamente! Total: ${formattedTotal.value} €`
+    );
+    openWhatsApp(buildWhatsAppMessage(created.id_order), preparedWhatsAppTab);
     cartStore.clearCart();
   } catch (error) {
+    preparedWhatsAppTab?.close();
     const status = (error as Error & { status?: number }).status;
-    const message = (error as Error).message?.toLowerCase?.() ?? '';
+    const message = (error as Error).message ?? '';
+    const messageLower = message.toLowerCase();
 
-    if (status === 404) {
+    if (status != null && isSubscriptionCanceledResponse(status, message)) {
+      notifyError(PUBLIC_STORE_UNAVAILABLE_MESSAGE);
+    } else if (status === 404) {
       notifyError('Este producto ya no está disponible.');
       void validateCartWithCatalog();
     } else if (status === 409) {
-      if (message.includes('not enough') || message.includes('stock')) {
+      if (messageLower.includes('not enough') || messageLower.includes('stock')) {
         notifyError('No hay stock suficiente para uno o más productos.');
       } else {
         notifyError('Uno o más productos no están disponibles para compra.');
       }
       void validateCartWithCatalog();
-    } else if (status === 400 && message.includes('tenant')) {
+    } else if (status === 400 && messageLower.includes('delivery_direction')) {
+      notifyError('La dirección de entrega es obligatoria.');
+      errors.value = {
+        ...errors.value,
+        deliveryDirection: 'Por favor ingresa la dirección de entrega',
+      };
+    } else if (status === 400 && messageLower.includes('delivery_date')) {
+      notifyError('Revisa la fecha de entrega.');
+      errors.value = {
+        ...errors.value,
+        deliveryDate: 'Por favor selecciona una fecha de entrega válida',
+      };
+    } else if (status === 400 && messageLower.includes('tenant')) {
       notifyError('No se pudo resolver la tienda. Recarga la página e intenta de nuevo.');
     } else {
       notifyError('Error al crear la orden. Por favor intenta de nuevo.');
@@ -381,12 +504,13 @@ onMounted(() => {
         </div>
 
         <div class="form-field">
-          <label for="delivery-address">Dirección de entrega</label>
+          <label for="delivery-direction">Dirección de entrega</label>
           <input
-            id="delivery-address"
-            v-model="form.deliveryAddress"
-            name="deliveryAddress"
+            id="delivery-direction"
+            v-model="form.deliveryDirection"
+            name="deliveryDirection"
             type="text"
+            required
             placeholder="https://maps.google.com/?q=..."
           />
           <BaseButton
@@ -397,22 +521,52 @@ onMounted(() => {
           >
             Abrir Google Maps
           </BaseButton>
+          <small v-if="errors.deliveryDirection">{{ errors.deliveryDirection }}</small>
         </div>
 
-        <!--
         <div class="form-field">
-          <label for="delivery-date">Fecha de entrega</label>
-          <input
-            id="delivery-date"
-            v-model="form.deliveryDate"
-            name="deliveryDate"
-            type="date"
-            :min="minDeliveryDate"
-            required
-          />
+          <span id="delivery-timing-label" class="form-field__label">Entrega</span>
+          <div
+            class="checkout-delivery-timing"
+            role="group"
+            aria-labelledby="delivery-timing-label"
+          >
+            <template v-if="!scheduleForLater">
+              <p class="checkout-delivery-timing__today">
+                Entrega para hoy
+                <span class="checkout-delivery-timing__date">{{ todayDeliveryLabel }}</span>
+              </p>
+              <BaseButton
+                unstyled
+                type="button"
+                class="checkout-location-button"
+                @click="openScheduleForLater"
+              >
+                Programar para otro día
+              </BaseButton>
+            </template>
+            <template v-else>
+              <label for="delivery-date">Fecha programada</label>
+              <input
+                id="delivery-date"
+                v-model="form.deliveryDate"
+                name="deliveryDate"
+                type="date"
+                :min="minScheduledDeliveryDate"
+                required
+              />
+              <BaseButton
+                unstyled
+                type="button"
+                class="checkout-location-button"
+                @click="useDeliveryToday"
+              >
+                Usar entrega para hoy
+              </BaseButton>
+            </template>
+          </div>
           <small v-if="errors.deliveryDate">{{ errors.deliveryDate }}</small>
         </div>
-        -->
 
         <div class="form-field">
           <label for="order-note">Nota (opcional)</label>
@@ -472,15 +626,16 @@ onMounted(() => {
 
     <section v-if="showWhatsAppWebHelper" class="checkout-whatsapp-helper">
       <div class="checkout-whatsapp-helper__card">
-        <h3>Enviar pedido por WhatsApp Web</h3>
-        <ol>
-          <li>Copia el mensaje del pedido.</li>
-          <li>Abre WhatsApp Web.</li>
-          <li>Busca el número de destino.</li>
-          <li>Pega el mensaje y envíalo.</li>
-        </ol>
+        <h3>Abrir WhatsApp para tu pedido</h3>
+        <p>
+          El navegador bloqueó la ventana emergente. Podés abrir WhatsApp manualmente o
+          copiar el mensaje.
+        </p>
         <div class="checkout-whatsapp-helper__actions">
-          <BaseButton unstyled type="button" @click="copyWhatsAppMessage">
+          <BaseButton unstyled type="button" @click="openWhatsAppInNewTab">
+            Abrir WhatsApp
+          </BaseButton>
+          <BaseButton unstyled type="button" class="secondary" @click="copyWhatsAppMessage">
             Copiar mensaje
           </BaseButton>
           <BaseButton
@@ -498,4 +653,3 @@ onMounted(() => {
     <BaseLink :to="homeRoute" class="checkout-page__home-link">Seguir comprando</BaseLink>
   </main>
 </template>
-
