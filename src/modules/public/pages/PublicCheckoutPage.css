@@ -70,9 +70,30 @@
   margin-bottom: 12px;
 }
 
-.form-field label {
+.form-field label,
+.form-field__label {
   font-weight: 700;
   font-size: var(--font-sm);
+}
+
+.checkout-delivery-timing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-delivery-timing__today {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--tenant-text);
+}
+
+.checkout-delivery-timing__date {
+  display: block;
+  margin-top: 2px;
+  color: var(--tenant-muted);
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .form-field input,
@@ -221,9 +242,11 @@
   margin: 0 0 10px;
 }
 
-.checkout-whatsapp-helper__card ol {
+.checkout-whatsapp-helper__card p {
   margin: 0;
-  padding-left: 20px;
+  color: var(--tenant-muted);
+  font-size: var(--font-sm);
+  line-height: 1.45;
 }
 
 .checkout-whatsapp-helper__actions {

@@ -107,14 +107,23 @@ export type CreateOrderItemPayload = {
   quantity: number;
 };
 
+/** Body for `POST /t/{tenant_slug}/orders`. */
 export type CreateOrderPayload = {
   name: string;
   email: string;
   phone: string;
-  delivery_address?: string | null;
-  delivery_date: string | null;
+  /** Required; Maps link or other delivery location value (same name as on order responses). */
+  delivery_direction: string;
+  /** Required; `YYYY-MM-DD`, calendar day ≥ today. */
+  delivery_date: string;
   note: string | null;
   items: CreateOrderItemPayload[];
+};
+
+/** Success body for public create (201). */
+export type CreateOrderResponse = {
+  message: string;
+  id_order: number;
 };
 
 export type TenantBranding = {
