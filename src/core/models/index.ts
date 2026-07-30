@@ -95,6 +95,12 @@ export type Order = {
   order_items: OrderItem[];
 };
 
+/** `GET /auth/orders` — cursor page (same shape as product lists). */
+export type OrderListResponse = {
+  items: Order[];
+  next_cursor: string | null;
+};
+
 /** Body for `PATCH /auth/orders/{id}` — fields optional (`omitempty` on server). */
 export type UpdateAuthOrderPayload = {
   status?: OrderPatchableStatus;
@@ -131,6 +137,8 @@ export type TenantBranding = {
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
+  /** Storefront invoice destination; `""` when unset (do not invent a number). */
+  whatsapp_phone: string;
 };
 
 /** No branding data until the public GET succeeds, or if the API fails (do not invent colors on the client). */
@@ -139,6 +147,7 @@ export const EMPTY_TENANT_BRANDING: TenantBranding = {
   primary_color: null,
   secondary_color: null,
   accent_color: null,
+  whatsapp_phone: '',
 };
 
 /** `GET /t/{tenant_slug}/branding` — envelope; `branding` maps to `TenantBranding` after parsing. */
@@ -166,6 +175,19 @@ export type UpdateTenantBrandingColorsResponse = {
   message: string;
   tenant_id: number;
   colors: TenantBrandingColorsBlock;
+};
+
+/** `PATCH /auth/branding/whatsapp` — always send `whatsapp_phone` (use `""` to clear). */
+export type UpdateTenantBrandingWhatsappPayload = {
+  whatsapp_phone: string;
+};
+
+/** `PATCH /auth/branding/whatsapp` — 200 response. */
+export type UpdateTenantBrandingWhatsappResponse = {
+  message: string;
+  tenant_id: number;
+  tenant_slug: string;
+  whatsapp_phone: string;
 };
 
 /** `PATCH /auth/tenant/branding/logo` — multipart field `logo`; body shape may vary by backend. */
@@ -295,7 +317,10 @@ export type TenantRegisterRequestBody = {
   tenant_name: string;
   admin_name: string;
   email: string;
+  /** Admin user phone (optional). Not the store WhatsApp. */
   phone?: string;
+  /** Tenant store WhatsApp for invoices (optional; max 20 after trim). */
+  whatsapp_phone?: string;
   password: string;
   one_time_code: string;
 };

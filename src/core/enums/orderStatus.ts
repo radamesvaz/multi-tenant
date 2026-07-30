@@ -23,3 +23,31 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 export function isPatchableOrderStatus(s: OrderStatus): s is OrderPatchableStatus {
   return PATCHABLE_ORDER_STATUSES.includes(s as OrderPatchableStatus);
 }
+
+/**
+ * Linear kitchen FSM (audit locked decisions):
+ * pending → preparing → ready → delivered
+ * cancel only from pending | preparing | ready
+ * deleted only from cancelled | expired | delivered
+ */
+export function getAllowedStatusTransitions(
+  current: OrderStatus,
+): OrderPatchableStatus[] {
+  switch (current) {
+    case 'pending':
+      return ['preparing', 'cancelled'];
+    case 'preparing':
+      return ['ready', 'cancelled'];
+    case 'ready':
+      return ['delivered', 'cancelled'];
+    case 'delivered':
+      return ['deleted'];
+    case 'cancelled':
+    case 'expired':
+      return ['deleted'];
+    case 'deleted':
+      return [];
+    default:
+      return [];
+  }
+}

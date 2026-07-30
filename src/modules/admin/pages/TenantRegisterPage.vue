@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { redirectOnSubscriptionCanceled } from '../../../core/auth/redirectOnSubscriptionCanceled';
 import { SubscriptionCanceledError } from '../../../core/auth/subscriptionApi';
@@ -12,6 +12,8 @@ import './AdminLoginPage.css';
 
 defineOptions({ name: 'TenantRegisterPage' });
 
+const WHATSAPP_PHONE_MAX_LEN = 20;
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -21,10 +23,19 @@ const tenantName = ref('');
 const adminName = ref('');
 const email = ref('');
 const phone = ref('');
+/** Store WhatsApp (invoices); distinct from admin `phone`. */
+const whatsappPhone = ref('');
+const whatsappTouched = ref(false);
 const password = ref('');
 const confirmPassword = ref('');
 const isSubmitting = ref(false);
 const errorMessage = ref<string | null>(null);
+
+watch(phone, (value) => {
+  if (!whatsappTouched.value) {
+    whatsappPhone.value = value;
+  }
+});
 
 const oneTimeCode = computed(() => {
   const raw = route.query.code;
@@ -102,6 +113,12 @@ async function onSubmit() {
   }
 
   const trimmedPhone = phone.value.trim();
+  const trimmedWhatsapp = whatsappPhone.value.trim();
+  if (trimmedWhatsapp.length > WHATSAPP_PHONE_MAX_LEN) {
+    errorMessage.value = `El WhatsApp de la tienda no puede superar ${WHATSAPP_PHONE_MAX_LEN} caracteres.`;
+    return;
+  }
+
   const payload = {
     tenant_name: trimmedTenantName,
     admin_name: trimmedAdminName,
@@ -109,6 +126,7 @@ async function onSubmit() {
     password: password.value,
     one_time_code: oneTimeCode.value,
     ...(trimmedPhone.length > 0 ? { phone: trimmedPhone } : {}),
+    ...(trimmedWhatsapp.length > 0 ? { whatsapp_phone: trimmedWhatsapp } : {}),
   };
 
   isSubmitting.value = true;
@@ -202,7 +220,7 @@ async function onSubmit() {
         </label>
 
         <label class="admin-login__field">
-          <span>Teléfono <em class="admin-login__optional">(opcional)</em></span>
+          <span>Teléfono del administrador <em class="admin-login__optional">(opcional)</em></span>
           <input
             v-model="phone"
             type="tel"
@@ -210,6 +228,27 @@ async function onSubmit() {
             autocomplete="tel"
             :disabled="isSubmitting"
           />
+        </label>
+
+        <label class="admin-login__field">
+          <span>
+            WhatsApp de la tienda
+            <em class="admin-login__optional">(opcional)</em>
+          </span>
+          <input
+            v-model="whatsappPhone"
+            type="tel"
+            name="whatsapp_phone"
+            autocomplete="tel"
+            :maxlength="WHATSAPP_PHONE_MAX_LEN"
+            placeholder="+584121234567"
+            :disabled="isSubmitting"
+            @input="whatsappTouched = true"
+          />
+          <small class="admin-login__field-hint">
+            Destino de los pedidos del checkout. Se precarga con el teléfono del admin; podés
+            cambiarlo.
+          </small>
         </label>
 
         <ul class="admin-login__requirements">

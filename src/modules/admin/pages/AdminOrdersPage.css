@@ -26,6 +26,28 @@
   color: #b00020;
 }
 
+.admin-orders__more {
+  margin-top: 1rem;
+}
+
+.admin-orders__load-more {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #cdd3ce;
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-orders__load-more:hover:not(:disabled) {
+  background: #f4f6f4;
+}
+
+.admin-orders__load-more:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .admin-orders__table-wrap {
   overflow-x: auto;
   border: 1px solid #dde2dd;

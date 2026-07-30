@@ -39,6 +39,19 @@
   padding: 0.5rem 0.6rem;
 }
 
+.admin-login__optional {
+  font-style: normal;
+  font-weight: 400;
+  color: #7a807c;
+}
+
+.admin-login__field-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #5c6360;
+  line-height: 1.35;
+}
+
 .admin-login__error {
   margin: 0;
   font-size: 0.9rem;
