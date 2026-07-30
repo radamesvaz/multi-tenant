@@ -27,6 +27,7 @@ import type {
   CreateProductResponse,
   Order,
   OrderItem,
+  OrderListResponse,
   Product,
   ProductListResponse,
   ProductStatus,
@@ -42,6 +43,8 @@ import type {
   UpdateProductDetailsPayload,
   UpdateTenantBrandingColorsPayload,
   UpdateTenantBrandingColorsResponse,
+  UpdateTenantBrandingWhatsappPayload,
+  UpdateTenantBrandingWhatsappResponse,
   PatchTenantBrandingLogoResponse,
 } from '../models';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -64,19 +67,47 @@ function tenantOrdersCreatePath(tenantSlug: string): string {
   return `/t/${encodeURIComponent(tenantSlug)}/orders`;
 }
 
-function authOrdersListPath(query?: { ignoreStatus?: boolean; status?: string }): string {
-  const path = '/auth/orders';
-  if (!query || (query.ignoreStatus !== true && !query.status)) {
-    return path;
-  }
+const DEFAULT_ORDER_PAGE_SIZE = 20;
+const MAX_ORDER_PAGE_SIZE = 100;
+
+export type AuthOrderListOptions = {
+  limit?: number;
+  cursor?: string | null;
+  ignoreStatus?: boolean;
+  status?: string;
+  signal?: AbortSignal;
+};
+
+function authOrdersListPath(query?: AuthOrderListOptions): string {
   const params = new URLSearchParams();
-  if (query.ignoreStatus === true) {
+  const limit = query?.limit ?? DEFAULT_ORDER_PAGE_SIZE;
+  if (limit < 1 || limit > MAX_ORDER_PAGE_SIZE) {
+    throw new Error('limit must be between 1 and 100');
+  }
+  params.set('limit', String(limit));
+  if (query?.cursor != null && query.cursor !== '') {
+    params.set('cursor', query.cursor);
+  }
+  if (query?.ignoreStatus === true) {
     params.set('ignore_status', 'true');
   }
-  if (query.status) {
+  if (query?.status) {
     params.set('status', query.status);
   }
-  return `${path}?${params.toString()}`;
+  const qs = params.toString();
+  return qs ? `/auth/orders?${qs}` : '/auth/orders';
+}
+
+function parseOrderListResponse(raw: unknown): OrderListResponse {
+  if (!raw || typeof raw !== 'object') {
+    return { items: [], next_cursor: null };
+  }
+  const o = raw as Record<string, unknown>;
+  const rawItems = o.items;
+  const items = Array.isArray(rawItems) ? rawItems.map(parseOrder) : [];
+  const nc = o.next_cursor;
+  const next_cursor = nc == null || nc === '' ? null : String(nc);
+  return { items, next_cursor };
 }
 
 /** Normalizes backend response (`OrderItems` PascalCase -> `order_items`). */
@@ -268,11 +299,15 @@ function parseTenantBrandingFields(raw: unknown): TenantBranding {
     const s = String(v).trim();
     return s.length > 0 ? s : null;
   };
+  const whatsappRaw = b.whatsapp_phone;
+  const whatsapp_phone =
+    whatsappRaw == null ? '' : String(whatsappRaw).trim();
   return {
     logo_url: str('logo_url'),
     primary_color: str('primary_color'),
     secondary_color: str('secondary_color'),
     accent_color: str('accent_color'),
+    whatsapp_phone,
   };
 }
 
@@ -493,6 +528,18 @@ export const tenantService = {
       rawBody: formData,
     });
   },
+
+  /**
+   * `PATCH /auth/branding/whatsapp` — Bearer JWT (tenant admin).
+   * Always send `whatsapp_phone` (including `""` to clear). Max 20 chars after trim.
+   */
+  updateBrandingWhatsapp(token: string, payload: UpdateTenantBrandingWhatsappPayload) {
+    return httpRequest<UpdateTenantBrandingWhatsappResponse>('/auth/branding/whatsapp', {
+      method: 'PATCH',
+      token,
+      body: payload,
+    });
+  },
 };
 
 export const productService = {
@@ -668,20 +715,18 @@ export const productService = {
 export const orderService = {
   /**
    * `GET /auth/orders` — tenant orders from JWT context (no slug in URL).
-   * Optional query: `ignore_status=true`, `status=<value>`.
+   * Returns `{ items, next_cursor }` (cursor page).
    */
   async listAuthOrders(
     token: string,
-    query?: { ignoreStatus?: boolean; status?: string },
-  ) {
+    query?: AuthOrderListOptions,
+  ): Promise<OrderListResponse> {
     const raw = await httpRequest<unknown>(authOrdersListPath(query), {
       method: 'GET',
       token,
+      signal: query?.signal,
     });
-    if (!Array.isArray(raw)) {
-      return [];
-    }
-    return raw.map(parseOrder);
+    return parseOrderListResponse(raw);
   },
 
   /** `GET /auth/orders/{id}` — details; tenant resolved from JWT context. */

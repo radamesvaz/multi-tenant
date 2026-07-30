@@ -9,6 +9,7 @@ import { isPurchasable, isSoldOut } from '../../../core/utils';
 import { BaseButton, BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
 import { useNotification } from '../../../shared/composables/useNotification';
+import { useTenantStore } from '../../../shared/store';
 import { useCartStore } from '../store/cart';
 import './PublicCheckoutPage.css';
 
@@ -25,8 +26,15 @@ const PHONE_PREFIXES = ['0412', '0414', '0416', '0422', '0424', '0426'];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const { tenantSlug } = useCurrentTenant();
+const tenantStore = useTenantStore();
 const cartStore = useCartStore();
 const { notifyError, notifySuccess } = useNotification();
+
+/** Store WhatsApp from public branding only (no env fallback). */
+const storeWhatsappPhone = computed(
+  () => (tenantStore.branding?.whatsapp_phone ?? '').trim(),
+);
+const storeWhatsappDigits = computed(() => storeWhatsappPhone.value.replace(/\D/g, ''));
 
 const form = ref({
   name: '',
@@ -292,22 +300,24 @@ const openGoogleMaps = () => {
 const isMobileUserAgent = () =>
   /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+const BAKERY_WHATSAPP_MISSING_MESSAGE =
+  'WhatsApp de la panadería no configurado. La tienda debe cargar su número en Personalización.';
+
 const buildWhatsAppWebUrl = (message: string) => {
-  const sanitizedPhone = envConfig.whatsapp.phoneNumber.replace(/\D/g, '');
+  const sanitizedPhone = storeWhatsappDigits.value;
   if (!sanitizedPhone) return null;
   const encodedText = encodeURIComponent(message);
   return {
     sanitizedPhone,
     encodedText,
-    webUrl: `https://api.whatsapp.com/send?phone=${sanitizedPhone}&text=${encodedText}`,
+    webUrl: `https://wa.me/${sanitizedPhone}?text=${encodedText}`,
   };
 };
 
 /** Open blank tab on the submit click (user gesture) so desktop is not blocked after await. */
 const prepareDesktopWhatsAppTab = (): Window | null => {
   if (isMobileUserAgent()) return null;
-  if (!envConfig.whatsapp.enabled) return null;
-  if (!envConfig.whatsapp.phoneNumber.replace(/\D/g, '')) return null;
+  if (!storeWhatsappDigits.value) return null;
   return window.open('about:blank', '_blank');
 };
 
@@ -317,16 +327,10 @@ const openWhatsAppInNewTab = () => {
 };
 
 const openWhatsApp = (message: string, preparedTab: Window | null = null) => {
-  if (!envConfig.whatsapp.enabled) {
-    preparedTab?.close();
-    notifyError('Integración con WhatsApp deshabilitada');
-    return;
-  }
-
   const built = buildWhatsAppWebUrl(message);
   if (!built) {
     preparedTab?.close();
-    notifyError('No hay número de WhatsApp configurado');
+    notifyError(BAKERY_WHATSAPP_MISSING_MESSAGE);
     return;
   }
 

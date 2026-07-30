@@ -141,6 +141,31 @@
   font-weight: 700;
 }
 
+.cart-page__checkout--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.cart-issues {
+  margin-top: 12px;
+  border: 1px solid #f5c2c7;
+  border-radius: 12px;
+  background: #fef2f2;
+  padding: 12px;
+}
+
+.cart-issues h3 {
+  margin: 0 0 8px;
+  font-size: var(--font-md);
+  color: var(--tenant-text);
+}
+
+.cart-issues ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
 @media (max-width: 640px) {
   .cart-page__header h1 {
     font-size: var(--font-xl);
