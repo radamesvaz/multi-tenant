@@ -2,9 +2,16 @@
   margin-bottom: 1.25rem;
 }
 
-.admin-invitations__header h1 {
-  margin: 0 0 0.35rem;
-  font-size: 1.35rem;
+.admin-invitations__back {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--primary, #2f6d4a);
+  text-decoration: none;
+}
+
+.admin-invitations__back:hover {
+  text-decoration: underline;
 }
 
 .admin-invitations__subtitle {

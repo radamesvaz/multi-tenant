@@ -169,12 +169,14 @@ function noopProductOpen() {
       <div class="store-layout storefront-branding-preview__layout" :style="layoutStyle">
         <header class="public-layout__header">
           <span class="store-brand storefront-branding-preview__no-nav">
-            <img
-              v-if="hasLogo"
-              :src="logoSrc || ''"
-              :alt="storeDisplayName"
-              class="store-brand__logo"
-            />
+            <span v-if="hasLogo" class="store-brand__logo-slot">
+              <img
+                :src="logoSrc || ''"
+                :alt="storeDisplayName"
+                class="store-brand__logo"
+                decoding="async"
+              />
+            </span>
             <span v-else class="store-brand__text">{{ storeDisplayName }}</span>
           </span>
           <nav class="store-nav">

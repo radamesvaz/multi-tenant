@@ -1,14 +1,12 @@
 import { EMPTY_TENANT_BRANDING, type TenantConfig } from '../models';
 
 /**
- * Logo specifications for tenants.
- * See full documentation: /markdowns/LOGO_SPECIFICATIONS.md
+ * Logo specifications for tenants — see `core/constants/logoSpec.ts`.
  *
  * Quick reference:
- * - Upload dimensions: 360 x 80 px (ideal)
- * - Display: max 180x40px (desktop), max 140x36px (mobile)
+ * - Fixed display slots (any aspect ratio): 200×48 desktop, 140×44 mobile, 160×48 admin
+ * - Upload hints: horizontal 400×96, square/circular 160×160, vertical 120×160
  * - Format: SVG preferred, PNG with transparency
- * - Max file size: 50KB
  */
 
 const createTenantConfig = (config: TenantConfig): TenantConfig => config;

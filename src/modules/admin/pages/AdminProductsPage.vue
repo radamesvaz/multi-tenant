@@ -9,11 +9,12 @@ import { envConfig } from '../../../core/config/env';
 import { productThumbnailUploadHintEs } from '../../../core/constants/productThumbnailSpec';
 import { productImageUploadHintEs } from '../../../core/constants/productImageSpec';
 import { RouterLink } from 'vue-router';
-import { ProductSearchBar } from '../../../shared/components';
+import { useAdminHeaderSearch } from '../composables';
 import { useAdminProductsStore } from '../store';
 import './AdminProductsPage.css';
 
 const productsStore = useAdminProductsStore();
+const { debouncedSearch } = useAdminHeaderSearch();
 
 const selectedProductId = ref<number | null>(null);
 const selectedProduct = computed(() =>
@@ -46,22 +47,10 @@ const selectedGalleryFiles = ref<File[]>([]);
 const thumbnailUploadHint = productThumbnailUploadHintEs();
 const galleryUploadHint = productImageUploadHintEs();
 
-const SEARCH_DEBOUNCE_MS = 400;
-const searchInput = ref('');
-const debouncedSearch = ref('');
-let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-watch(searchInput, (v) => {
-  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(() => {
-    debouncedSearch.value = v.trim();
-  }, SEARCH_DEBOUNCE_MS);
-});
-
 watch(
   debouncedSearch,
-  () => {
-    void productsStore.loadFirstPage(debouncedSearch.value);
+  (q) => {
+    void productsStore.loadFirstPage(q);
   },
   { immediate: true },
 );
@@ -112,7 +101,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   removeKeyListener?.();
   revokeThumbnailLocalPreview();
 });
@@ -295,23 +283,13 @@ async function removeGalleryImage(url: string) {
   <div class="admin-products">
     <header class="admin-products__header">
       <div class="admin-products__header-row">
-        <h1>Productos</h1>
+        <p class="admin-products__subtitle">
+          Catálogo paginado con búsqueda. Hacé clic en una fila para editar o creá un producto nuevo.
+        </p>
         <RouterLink :to="{ name: 'admin-product-new' }" class="admin-products__new-btn">
           Nuevo producto
         </RouterLink>
       </div>
-      <p class="admin-products__subtitle">
-        Catálogo paginado con búsqueda. Hacé clic en una fila para editar o creá un producto nuevo.
-      </p>
-    </header>
-
-    <div class="admin-products__search-sticky">
-      <ProductSearchBar
-        id="admin-product-search"
-        v-model="searchInput"
-        placeholder="Al menos 2 letras (prefijo del nombre)"
-        variant="admin"
-      />
       <label class="admin-products__deleted-toggle">
         <input
           type="checkbox"
@@ -320,7 +298,15 @@ async function removeGalleryImage(url: string) {
         />
         <span>Mostrar eliminados</span>
       </label>
-    </div>
+    </header>
+
+    <p
+      v-if="productsStore.isLoading && productsStore.products.length > 0"
+      class="admin-products__refresh"
+      aria-live="polite"
+    >
+      Actualizando…
+    </p>
 
     <div v-if="productsStore.isLoading && productsStore.products.length === 0" class="admin-products__state">
       Cargando…
@@ -341,9 +327,14 @@ async function removeGalleryImage(url: string) {
         {{ productsStore.error }}
       </p>
       <div v-if="productsStore.products.length === 0" class="admin-products__state">
-        <p v-if="productsStore.includeDeleted">No hay productos para este tenant.</p>
+        <p v-if="debouncedSearch">No hay productos que coincidan con la búsqueda.</p>
+        <p v-else-if="productsStore.includeDeleted">No hay productos para este tenant.</p>
         <p v-else>No hay productos activos o pausados. Activá «Mostrar eliminados» para ver soft deletes.</p>
-        <RouterLink :to="{ name: 'admin-product-new' }" class="admin-products__new-btn">
+        <RouterLink
+          v-if="!debouncedSearch"
+          :to="{ name: 'admin-product-new' }"
+          class="admin-products__new-btn"
+        >
           Crear primer producto
         </RouterLink>
       </div>
@@ -395,7 +386,7 @@ async function removeGalleryImage(url: string) {
         <button
           type="button"
           class="admin-products__load-more"
-          :disabled="productsStore.isLoadingMore"
+          :disabled="productsStore.isLoadingMore || productsStore.isLoading"
           @click="productsStore.loadMore()"
         >
           {{ productsStore.isLoadingMore ? 'Cargando…' : 'Cargar más' }}

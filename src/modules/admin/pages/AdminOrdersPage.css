@@ -1,15 +1,12 @@
-.admin-orders__header {
-  margin-bottom: 1.25rem;
-}
-
-.admin-orders__header h1 {
-  margin: 0 0 0.35rem;
-  font-size: 1.35rem;
-}
-
 .admin-orders__subtitle {
-  margin: 0;
+  margin: 0 0 1rem;
   font-size: 0.9rem;
+  color: #5c6360;
+}
+
+.admin-orders__refresh {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
   color: #5c6360;
 }
 
@@ -51,7 +48,9 @@
 .admin-orders__table-wrap {
   overflow-x: auto;
   border: 1px solid #dde2dd;
-  border-radius: 6px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 16, 0.04);
 }
 
 .admin-orders__table {

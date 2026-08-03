@@ -75,6 +75,10 @@ export type AuthOrderListOptions = {
   cursor?: string | null;
   ignoreStatus?: boolean;
   status?: string;
+  /** Client name filter (prefix / match — backend contract). */
+  name?: string;
+  /** Client email filter (prefix / match — backend contract). */
+  email?: string;
   signal?: AbortSignal;
 };
 
@@ -93,6 +97,14 @@ function authOrdersListPath(query?: AuthOrderListOptions): string {
   }
   if (query?.status) {
     params.set('status', query.status);
+  }
+  const name = query?.name?.trim() ?? '';
+  if (name.length >= 2) {
+    params.set('name', name);
+  }
+  const email = query?.email?.trim() ?? '';
+  if (email.length >= 2) {
+    params.set('email', email);
   }
   const qs = params.toString();
   return qs ? `/auth/orders?${qs}` : '/auth/orders';
@@ -516,13 +528,13 @@ export const tenantService = {
   },
 
   /**
-   * `PATCH /auth/tenant/branding/logo` — `multipart/form-data`, field `logo`.
+   * `PATCH /auth/branding/logo` — `multipart/form-data`, field `logo`.
    * Do not set `Content-Type`; the browser sets the boundary.
    */
   patchTenantBrandingLogo(token: string, file: File) {
     const formData = new FormData();
     formData.append('logo', file);
-    return httpRequest<PatchTenantBrandingLogoResponse>('/auth/tenant/branding/logo', {
+    return httpRequest<PatchTenantBrandingLogoResponse>('/auth/branding/logo', {
       method: 'PATCH',
       token,
       rawBody: formData,

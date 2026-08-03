@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import { InvitationApiError } from '../../../core/auth/invitationsApi';
 import { SubscriptionCanceledError } from '../../../core/auth/subscriptionApi';
 import { INVITATION_ERROR_CODES } from '../../../core/models';
@@ -238,7 +239,9 @@ onMounted(loadLastInvitation);
 <template>
   <div class="admin-invitations">
     <header class="admin-invitations__header">
-      <h1>Invitar usuario</h1>
+      <RouterLink :to="{ name: 'admin-settings' }" class="admin-invitations__back">
+        ← Configuración
+      </RouterLink>
       <p class="admin-invitations__subtitle">
         Enviá una invitación por correo para que otra persona administre esta tienda.
       </p>
