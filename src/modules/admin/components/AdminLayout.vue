@@ -2,9 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { getTenantUiConfig } from '../../../core/config';
-import { envConfig } from '../../../core/config/env';
-import { displayNameFromJwt } from '../../../core/utils';
+import { displayNameFromJwt, resolveTenantMediaUrl } from '../../../core/utils';
 import { useAdminSubscriptionRefresh } from '../../../shared/composables/useAdminSubscriptionRefresh';
+import { useTenantFavicon } from '../../../shared/composables/useTenantFavicon';
 import { useAuthStore, useSubscriptionStore, useTenantStore } from '../../../shared/store';
 import { useAdminHeaderSearch } from '../composables';
 import SubscriptionPendingBanner from './SubscriptionPendingBanner.vue';
@@ -28,13 +28,12 @@ const userDisplayName = computed(() => {
   return displayNameFromJwt(token) ?? 'Administrador';
 });
 
-const logoSrc = computed(() => {
-  const url = tenantStore.branding?.logo_url;
-  if (url == null) return null;
-  const u = String(url).trim();
-  if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u;
-  return `${envConfig.apiBaseUrl}${u.startsWith('/') ? u : `/${u}`}`;
+const logoSrc = computed(() => resolveTenantMediaUrl(tenantStore.branding?.logo_url));
+
+useTenantFavicon({
+  logoUrl: () => tenantStore.branding?.logo_url,
+  fallbackLetter: () => tenantDisplayName.value.charAt(0) || 'A',
+  fallbackColor: () => tenantStore.branding?.primary_color ?? '#2f6d4a',
 });
 
 const pageTitle = computed(() => {

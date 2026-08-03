@@ -6,6 +6,7 @@ import { getTenantUiConfig } from '../../../core/config';
 import { getMockTenantConfig } from '../../../core/mocks';
 import { BaseLink } from '../../../shared/components';
 import { useCurrentTenant } from '../../../shared/composables/useCurrentTenant';
+import { useTenantFavicon } from '../../../shared/composables/useTenantFavicon';
 import { useTenantStore } from '../../../shared/store';
 import { useCartStore } from '../store/cart';
 import './PublicLayout.css';
@@ -41,38 +42,6 @@ const tenantThemeStyle = computed(() => ({
   '--tenant-accent': branding.value.accent_color ?? '#1f4d34',
 }));
 
-function generateFavicon(letter: string, bgColor: string): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
-
-  ctx.fillStyle = bgColor;
-  ctx.beginPath();
-  ctx.arc(32, 32, 30, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px "DM Sans", Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(letter.toUpperCase(), 32, 34);
-
-  return canvas.toDataURL('image/png');
-}
-
-function updateFavicon(dataUrl: string) {
-  let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    document.head.appendChild(link);
-  }
-  link.type = 'image/png';
-  link.href = dataUrl;
-}
-
 watch(
   () => tenantSlug.value,
   (slug) => {
@@ -83,16 +52,16 @@ watch(
 );
 
 watchEffect(() => {
-  const name = tenantUiConfig.value.displayName;
-  const color = branding.value.primary_color ?? '#2f6d4a';
+  document.title = isStoreUnavailable.value
+    ? 'Tienda no disponible'
+    : tenantUiConfig.value.displayName;
+});
 
-  document.title = isStoreUnavailable.value ? 'Tienda no disponible' : name;
-
-  const firstLetter = isStoreUnavailable.value ? '?' : name.charAt(0);
-  const faviconUrl = generateFavicon(firstLetter, color);
-  if (faviconUrl) {
-    updateFavicon(faviconUrl);
-  }
+useTenantFavicon({
+  logoUrl: () => (isStoreUnavailable.value ? null : branding.value.logo_url),
+  fallbackLetter: () =>
+    isStoreUnavailable.value ? '?' : tenantUiConfig.value.displayName.charAt(0) || '?',
+  fallbackColor: () => branding.value.primary_color ?? '#2f6d4a',
 });
 </script>
 
