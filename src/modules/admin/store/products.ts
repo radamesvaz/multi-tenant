@@ -89,6 +89,7 @@ export const useAdminProductsStore = defineStore('admin-products', {
     },
 
     async loadFirstPage(searchInput = '') {
+      const hadItems = this.products.length > 0;
       this.isLoading = true;
       this.isLoadingMore = false;
       this.error = null;
@@ -111,8 +112,10 @@ export const useAdminProductsStore = defineStore('admin-products', {
         if (isAbortError(error)) return;
         const code = (error as Error & { code?: string }).code;
         this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
-        this.products = [];
-        this.nextCursor = null;
+        if (!hadItems) {
+          this.products = [];
+          this.nextCursor = null;
+        }
       } finally {
         this.isLoading = false;
       }

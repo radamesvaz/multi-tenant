@@ -30,6 +30,28 @@ export function roleIdFromJwt(token: string): number | null {
   return null;
 }
 
+function stringClaim(payload: Record<string, unknown>, key: string): string | null {
+  const raw = payload[key];
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/** Best-effort display name from common JWT claim keys. */
+export function displayNameFromJwt(token: string): string | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  return (
+    stringClaim(payload, 'name') ??
+    stringClaim(payload, 'full_name') ??
+    stringClaim(payload, 'user_name') ??
+    stringClaim(payload, 'admin_name') ??
+    stringClaim(payload, 'email') ??
+    null
+  );
+}
+
 /** JWT `exp` uses UTC epoch seconds. Without a valid `exp`, token is treated as not expired. */
 export function isJwtExpired(token: string): boolean {
   const payload = decodeJwtPayload(token);

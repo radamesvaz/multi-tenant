@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import type { TenantBranding } from '../../../core/models';
 import { getTenantUiConfig } from '../../../core/config';
 import { envConfig } from '../../../core/config/env';
+import { logoUploadHintEs } from '../../../core/constants/logoSpec';
 import { tenantService } from '../../../core/services';
 import { isValidHexColor, normalizeHexColor } from '../../../core/utils/tenantBranding';
 import { AppSnackbar } from '../../../shared/components';
@@ -16,6 +18,7 @@ const tenantStore = useTenantStore();
 const tenantSlug = computed(() => authStore.getActiveAdminTenantSlug());
 
 const WHATSAPP_PHONE_MAX_LEN = 20;
+const logoUploadHint = logoUploadHintEs();
 
 const isLoading = ref(true);
 const isSaving = ref(false);
@@ -261,7 +264,9 @@ async function saveWhatsapp() {
   <AppSnackbar v-model:visible="snackbarOpen" :message="snackbarMessage" />
   <div class="admin-branding">
     <header class="admin-branding__header">
-      <h1>Personalización</h1>
+      <RouterLink :to="{ name: 'admin-settings' }" class="admin-branding__back">
+        ← Configuración
+      </RouterLink>
       <p class="admin-branding__subtitle">
         Logo, colores y WhatsApp de la tienda (destino de pedidos del checkout).
       </p>
@@ -327,7 +332,10 @@ async function saveWhatsapp() {
         <h2 class="admin-branding__section-title">Logo</h2>
         <p class="admin-branding__hint">
           Subí una imagen; se envía como <code>multipart/form-data</code> con el campo <code>logo</code>.
-          Formatos habituales: PNG, SVG, JPEG.
+          Formatos habituales: SVG o PNG con transparencia (también JPEG).
+        </p>
+        <p class="admin-branding__hint admin-branding__hint--logo-spec">
+          {{ logoUploadHint }}
         </p>
         <input
           ref="logoFileInput"
@@ -340,11 +348,17 @@ async function saveWhatsapp() {
         />
         <div class="admin-branding__logo-upload">
           <div v-if="displayLogoSrc" class="admin-branding__logo-block">
-            <img
-              :src="displayLogoSrc"
-              alt=""
-              class="admin-branding__logo-img"
-            />
+            <span class="admin-branding__logo-slot" aria-hidden="true">
+              <img
+                :src="displayLogoSrc"
+                alt=""
+                class="admin-branding__logo-img"
+                decoding="async"
+              />
+            </span>
+            <span class="admin-branding__logo-slot-label">
+              Vista previa del espacio fijo (escritorio 200×48)
+            </span>
           </div>
           <p v-else class="admin-branding__muted">No hay vista previa. Elegí un archivo para previsualizar.</p>
           <div class="admin-branding__logo-actions">

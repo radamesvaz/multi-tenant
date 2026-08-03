@@ -120,12 +120,14 @@ watchEffect(() => {
     <template v-else>
       <header class="public-layout__header">
         <BaseLink :to="homeRoute" class="store-brand">
-          <img
-            v-if="hasLogo"
-            :src="branding.logo_url || ''"
-            :alt="tenantUiConfig.displayName"
-            class="store-brand__logo"
-          />
+          <span v-if="hasLogo" class="store-brand__logo-slot">
+            <img
+              :src="branding.logo_url || ''"
+              :alt="tenantUiConfig.displayName"
+              class="store-brand__logo"
+              decoding="async"
+            />
+          </span>
           <span v-else class="store-brand__text">
             {{ tenantUiConfig.displayName }}
           </span>

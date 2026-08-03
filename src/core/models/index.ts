@@ -190,7 +190,7 @@ export type UpdateTenantBrandingWhatsappResponse = {
   whatsapp_phone: string;
 };
 
-/** `PATCH /auth/tenant/branding/logo` — multipart field `logo`; body shape may vary by backend. */
+/** `PATCH /auth/branding/logo` — multipart field `logo`; body shape may vary by backend. */
 export type PatchTenantBrandingLogoResponse = {
   message?: string;
 };

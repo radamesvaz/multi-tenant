@@ -20,10 +20,19 @@ function newListSessionSignal(): AbortSignal {
   return listSessionAbort.signal;
 }
 
+/** Map a single search box to backend `name` or `email` (min 2 chars). */
+function orderSearchFilters(raw: string): { name?: string; email?: string } {
+  const t = raw.trim();
+  if (t.length < 2) return {};
+  if (t.includes('@')) return { email: t };
+  return { name: t };
+}
+
 type OrdersState = {
   orders: Order[];
   selectedOrder: Order | null;
   nextCursor: string | null;
+  listSearch: string;
   isLoading: boolean;
   isLoadingMore: boolean;
   error: string | null;
@@ -34,6 +43,7 @@ export const useOrdersStore = defineStore('admin-orders', {
     orders: [],
     selectedOrder: null,
     nextCursor: null,
+    listSearch: '',
     isLoading: false,
     isLoadingMore: false,
     error: null,
@@ -58,16 +68,20 @@ export const useOrdersStore = defineStore('admin-orders', {
       await this.loadFirstPage();
     },
 
-    async loadFirstPage() {
+    async loadFirstPage(searchInput = '') {
+      const hadItems = this.orders.length > 0;
       this.isLoading = true;
       this.isLoadingMore = false;
       this.error = null;
 
       try {
         const { token } = this.getAuthContext();
+        const filters = orderSearchFilters(searchInput);
+        this.listSearch = searchInput.trim().length >= 2 ? searchInput.trim() : '';
         const signal = newListSessionSignal();
         const { items, next_cursor } = await orderService.listAuthOrders(token, {
           limit: ADMIN_ORDER_PAGE_SIZE,
+          ...filters,
           signal,
         });
         this.orders = items;
@@ -76,8 +90,10 @@ export const useOrdersStore = defineStore('admin-orders', {
         if (isAbortError(error)) return;
         const code = (error as Error & { code?: string }).code;
         this.error = code === 'SESSION_EXPIRED' ? null : (error as Error).message;
-        this.orders = [];
-        this.nextCursor = null;
+        if (!hadItems) {
+          this.orders = [];
+          this.nextCursor = null;
+        }
       } finally {
         this.isLoading = false;
       }
@@ -94,9 +110,11 @@ export const useOrdersStore = defineStore('admin-orders', {
 
       try {
         const { token } = this.getAuthContext();
+        const filters = orderSearchFilters(this.listSearch);
         const { items, next_cursor } = await orderService.listAuthOrders(token, {
           limit: ADMIN_ORDER_PAGE_SIZE,
           cursor: this.nextCursor,
+          ...filters,
           signal,
         });
         this.orders = [...this.orders, ...items];

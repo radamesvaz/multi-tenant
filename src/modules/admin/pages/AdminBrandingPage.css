@@ -2,9 +2,16 @@
   margin-bottom: 1.25rem;
 }
 
-.admin-branding__header h1 {
-  margin: 0 0 0.35rem;
-  font-size: 1.35rem;
+.admin-branding__back {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--primary, #2f6d4a);
+  text-decoration: none;
+}
+
+.admin-branding__back:hover {
+  text-decoration: underline;
 }
 
 .admin-branding__subtitle {
@@ -72,22 +79,46 @@
   align-items: center;
 }
 
+.admin-branding__hint--logo-spec {
+  margin-top: -0.35rem;
+}
+
 .admin-branding__logo-block {
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
   padding: 0.75rem;
   border: 1px solid #dde2dd;
   border-radius: 8px;
   background: #fafbfa;
 }
 
+.admin-branding__logo-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 200px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px dashed #c8cfcb;
+  border-radius: 4px;
+  background: #fff;
+}
+
 .admin-branding__logo-img {
   display: block;
+  max-width: 100%;
+  max-height: 100%;
   width: auto;
   height: auto;
-  max-width: 180px;
-  max-height: 40px;
   object-fit: contain;
+  object-position: left center;
+}
+
+.admin-branding__logo-slot-label {
+  font-size: 0.75rem;
+  color: #6f786f;
 }
 
 .admin-branding__colors-grid {

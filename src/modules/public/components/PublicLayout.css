@@ -43,15 +43,31 @@
   align-items: center;
   text-decoration: none;
   flex-shrink: 0;
+  min-width: 0;
+}
+
+/**
+ * Fixed reserved box: layout never shifts with file size/aspect ratio.
+ * Image keeps its natural proportions inside (horizontal, vertical, or circular).
+ */
+.store-brand__logo-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 200px;
+  height: 48px;
+  overflow: hidden;
 }
 
 .store-brand__logo {
   display: block;
+  max-width: 100%;
+  max-height: 100%;
   width: auto;
   height: auto;
-  max-height: 52px;
-  max-width: 240px;
   object-fit: contain;
+  object-position: left center;
 }
 
 .store-brand__text {
@@ -135,9 +151,9 @@
     padding-inline: 14px;
   }
 
-  .store-brand__logo {
-    max-height: 46px;
-    max-width: 190px;
+  .store-brand__logo-slot {
+    width: 140px;
+    height: 44px;
   }
 
   .store-brand__text {

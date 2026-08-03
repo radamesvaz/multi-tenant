@@ -11,10 +11,12 @@ import type {
   UpdateAuthOrderPayload,
 } from '../../../core/models';
 import { osmEmbedUrl, resolveLatLngForMapsUrl } from '../../../core/utils';
+import { useAdminHeaderSearch } from '../composables';
 import { useOrdersStore } from '../store';
 import './AdminOrdersPage.css';
 
 const ordersStore = useOrdersStore();
+const { debouncedSearch } = useAdminHeaderSearch();
 const selectedOrder = ref<Order | null>(null);
 
 /** OpenStreetMap preview (no Google scripts) after resolving coordinates from URL. */
@@ -92,9 +94,16 @@ async function copyDeliveryMapsLink() {
   }
 }
 
+watch(
+  debouncedSearch,
+  (q) => {
+    void ordersStore.loadFirstPage(q);
+  },
+  { immediate: true },
+);
+
 let removeKeyListener: (() => void) | undefined;
 onMounted(() => {
-  void ordersStore.loadOrders();
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       closeModal();
@@ -274,22 +283,48 @@ function lineSubtotal(unit: number, qty: number) {
 
 <template>
   <div class="admin-orders">
-    <header class="admin-orders__header">
-      <h1>Órdenes</h1>
-      <p class="admin-orders__subtitle">
-        Pedidos del tenant. Hacé clic en una fila para ver el detalle y actualizar estado o pago.
-      </p>
-    </header>
+    <p class="admin-orders__subtitle">
+      Pedidos del tenant. Hacé clic en una fila para ver el detalle y actualizar estado o pago.
+    </p>
 
-    <div v-if="ordersStore.isLoading" class="admin-orders__state">Cargando…</div>
-    <div v-else-if="ordersStore.error" class="admin-orders__state admin-orders__state--error" role="alert">
+    <p
+      v-if="ordersStore.isLoading && ordersStore.orders.length > 0"
+      class="admin-orders__refresh"
+      aria-live="polite"
+    >
+      Actualizando…
+    </p>
+
+    <div
+      v-if="ordersStore.isLoading && ordersStore.orders.length === 0"
+      class="admin-orders__state"
+    >
+      Cargando…
+    </div>
+    <div
+      v-else-if="ordersStore.error && ordersStore.orders.length === 0"
+      class="admin-orders__state admin-orders__state--error"
+      role="alert"
+    >
       {{ ordersStore.error }}
     </div>
     <div v-else-if="ordersStore.orders.length === 0" class="admin-orders__state">
-      No hay órdenes para este tenant.
+      {{
+        debouncedSearch
+          ? 'No hay órdenes que coincidan con la búsqueda.'
+          : 'No hay órdenes para este tenant.'
+      }}
     </div>
 
     <template v-else>
+      <div
+        v-if="ordersStore.error"
+        class="admin-orders__state admin-orders__state--error"
+        role="alert"
+      >
+        {{ ordersStore.error }}
+      </div>
+
       <div class="admin-orders__table-wrap">
         <table class="admin-orders__table">
           <thead>
@@ -347,7 +382,7 @@ function lineSubtotal(unit: number, qty: number) {
         <button
           type="button"
           class="admin-orders__load-more"
-          :disabled="ordersStore.isLoadingMore"
+          :disabled="ordersStore.isLoadingMore || ordersStore.isLoading"
           @click="ordersStore.loadMore()"
         >
           {{ ordersStore.isLoadingMore ? 'Cargando…' : 'Cargar más' }}
