@@ -5,13 +5,15 @@ import { redirectOnSubscriptionCanceled } from '../../../core/auth/redirectOnSub
 import { SubscriptionCanceledError } from '../../../core/auth/subscriptionApi';
 import { envConfig, getTenantUiConfig } from '../../../core/config';
 import { authService } from '../../../core/services';
-import { useAuthStore, useSubscriptionStore } from '../../../shared/store';
+import { useTenantFavicon } from '../../../shared/composables/useTenantFavicon';
+import { useAuthStore, useSubscriptionStore, useTenantStore } from '../../../shared/store';
 import './AdminLoginPage.css';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
+const tenantStore = useTenantStore();
 
 const email = ref('');
 const password = ref('');
@@ -29,6 +31,20 @@ const tenantSlug = computed(() => {
 
 const tenantUiConfig = computed(() => getTenantUiConfig(tenantSlug.value));
 const supportPhone = computed(() => tenantUiConfig.value.supportPhone ?? null);
+
+watch(
+  tenantSlug,
+  (slug) => {
+    void tenantStore.loadBrandingForSlug(slug);
+  },
+  { immediate: true },
+);
+
+useTenantFavicon({
+  logoUrl: () => tenantStore.branding?.logo_url,
+  fallbackLetter: () => tenantUiConfig.value.displayName.charAt(0) || 'A',
+  fallbackColor: () => tenantStore.branding?.primary_color ?? '#2f6d4a',
+});
 
 watch(
   () => route.query.email,
